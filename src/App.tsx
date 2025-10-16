@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Scene3D } from "./components/Scene3D";
 import { SearchBar } from "./components/SearchBar";
-import { WebFrame } from "./components/WebFrame";
 
 function App() {
   const [iframeSrc, setIframeSrc] = useState<string | undefined>(undefined);
