@@ -1,0 +1,45 @@
+{
+  "$schema": "https://cdn.statically.io/gh/nguyenngoclongdev/cdn/main/schema/v11/terminal-keeper.json",
+  "theme": "tribe",
+  "active": "default",
+  "activateOnStartup": true,
+  "keepExistingTerminals": false,
+  "sessions": {
+    "default": [
+      {
+        "name": "Home",
+        "autoExecuteCommands": true,
+        "icon": "terminal-powershell",
+        "focus": true,
+        "color": "terminal.ansiBrightBlue",
+        "message": "Your installs and other one-shot cli run here"
+      },
+      [
+        {
+          "name": "Server runner",
+          "icon": "server",
+          "autoExecuteCommands": true,
+          "commands": [
+            "npm run server:watch"
+          ]
+        },
+        {
+          "name": "Front launcher",
+          "icon": "browser",
+          "autoExecuteCommands": true,
+          "commands": [
+            "npm run dev"
+          ]
+        },
+        {
+          "name": "Library Watcher",
+          "icon": "library",
+          "autoExecuteCommands": true,
+          "commands": [
+            "npm run lib:watch"
+          ]
+        }
+      ]
+    ]
+  }
+}

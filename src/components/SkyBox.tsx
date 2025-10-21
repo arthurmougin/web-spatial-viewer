@@ -2,53 +2,45 @@ import { BackSide } from "three";
 import { LayerMaterial, Depth, Noise, Fresnel } from "lamina";
 import { Text3D, Center } from "@react-three/drei";
 
-interface Direction {
-  position: [number, number, number];
-  rotation: [number, number, number];
-  title: string;
-  subtitle: string;
+interface SkyBoxProps {
+  showWelcome?: boolean;
 }
 
-export default function SkyBox({ name = "Web Spatial Viewer" }) {
-  const directions: Direction[] = [
-    {
-      position: [0, 0, 45],
-      rotation: [0, Math.PI, 0],
-      title: name,
-      subtitle: "Forward",
-    },
-    {
-      position: [0, 0, -45],
-      rotation: [0, 0, 0],
-      title: name,
-      subtitle: "Back",
-    },
-    {
-      position: [45, 0, 0],
-      rotation: [0, -Math.PI / 2, 0],
-      title: name,
-      subtitle: "Right",
-    },
-    {
-      position: [-45, 0, 0],
-      rotation: [0, Math.PI / 2, 0],
-      title: name,
-      subtitle: "Left",
-    },
-    {
-      position: [0, 45, 0],
-      rotation: [-Math.PI / 2, Math.PI, 0], // Rotation -90° autour de X pour être parallèle au sol
-      title: name,
-      subtitle: "Up",
-    },
-    {
-      position: [0, -45, 0],
-      rotation: [Math.PI / 2, Math.PI, 0], // Rotation 90° autour de X pour être parallèle au sol
-      title: name,
-      subtitle: "Down",
-    },
-  ];
+const Welcome = () => (
+  <Center position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+    <Text3D
+      font="/fonts/helvetiker_regular.typeface.json"
+      size={0.15}
+      height={0.01}
+      curveSegments={12}
+      bevelEnabled
+      bevelThickness={0.002}
+      bevelSize={0.002}
+      bevelOffset={0}
+      bevelSegments={3}
+    >
+      Web Spatial Viewer
+      <meshStandardMaterial color="#299bf8" metalness={0.5} roughness={0.5} />
+    </Text3D>
+    <Text3D
+      position={[0.1, -0.2, 0]}
+      font="/fonts/helvetiker_regular.typeface.json"
+      size={0.05}
+      height={0.005}
+      curveSegments={2}
+    >
+      By Arthur Mougin
+      <meshPhysicalMaterial
+        color="#4d4fc9"
+        opacity={0.2}
+        transparent
+        wireframe
+      />
+    </Text3D>
+  </Center>
+);
 
+export default function SkyBox({ showWelcome = false }: SkyBoxProps) {
   return (
     <>
       <mesh scale={[100, 100, 100]}>
@@ -73,43 +65,7 @@ export default function SkyBox({ name = "Web Spatial Viewer" }) {
           <Noise mapping="local" type="cell" scale={0.5} mode="softlight" />
         </LayerMaterial>
       </mesh>
-
-      {directions.map((dir, index) => (
-        <group key={index} position={dir.position} rotation={dir.rotation}>
-          <Center>
-            <group position={[0, 5, 0]}>
-              <Text3D
-                size={3.75}
-                height={0.5}
-                curveSegments={12}
-                bevelEnabled
-                bevelThickness={0.1}
-                bevelSize={0.1}
-                bevelSegments={5}
-                font="/fonts/helvetiker_regular.typeface.json"
-              >
-                {dir.title}
-                <meshBasicMaterial color={"white"} />
-              </Text3D>
-            </group>
-            <group position={[0, 0, 0]}>
-              <Text3D
-                size={2.5}
-                height={0.5}
-                curveSegments={8}
-                bevelEnabled
-                bevelThickness={0.05}
-                bevelSize={0.05}
-                bevelSegments={3}
-                font="/fonts/helvetiker_regular.typeface.json"
-              >
-                {dir.subtitle}
-                <meshStandardMaterial color={"white"} />
-              </Text3D>
-            </group>
-          </Center>
-        </group>
-      ))}
+      {showWelcome && <Welcome />}
     </>
   );
 }

@@ -1,14 +1,32 @@
 import { useEffect, useRef } from "react";
 import { Html } from "@react-three/drei";
 
+const DEFAULT_FRAME_SIZE = {
+  width: 1280,
+  height: 720,
+};
+
+interface FrameSize {
+  width: number;
+  height: number;
+}
+
 interface WebFrameProps {
   src: string;
   position?: [number, number, number];
+  defaultSize?: FrameSize;
 }
 
-export function WebFrame({ src, position = [5, 0, 0] }: WebFrameProps) {
+export function WebFrame({
+  src,
+  position = [5, 0, 0],
+  defaultSize,
+}: WebFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
+  const frameSize: FrameSize = defaultSize || DEFAULT_FRAME_SIZE;
 
   useEffect(() => {
     const handleMouseDown = () => {
@@ -66,6 +84,11 @@ export function WebFrame({ src, position = [5, 0, 0] }: WebFrameProps) {
       }
     };
   }, [src]);
+
+  const htmlScale = 0.001; // Facteur d'échelle pour convertir les pixels en unités Three.js
+  const scaledWidth = frameSize.width * htmlScale;
+  const scaledHeight = frameSize.height * htmlScale;
+
   return (
     <Html
       transform
@@ -74,7 +97,10 @@ export function WebFrame({ src, position = [5, 0, 0] }: WebFrameProps) {
       distanceFactor={0.5}
       occlude="blending"
       scale={1}
-      style={{ width: "1280px", height: "720px" }}
+      style={{
+        width: `${frameSize.width}px`,
+        height: `${frameSize.height}px`,
+      }}
     >
       <div
         ref={containerRef}
@@ -82,7 +108,6 @@ export function WebFrame({ src, position = [5, 0, 0] }: WebFrameProps) {
           width: "100%",
           height: "100%",
           background: "#fff",
-          borderRadius: "10px",
           boxShadow: "0 0 20px rgba(0,0,0,0.3)",
           overflow: "hidden",
           transition: "opacity 0.15s ease-out",

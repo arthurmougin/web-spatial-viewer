@@ -10,11 +10,21 @@ const PORT = 3000;
 
 // Utilitaire pour reconstruire l'URL cible à partir du sous-domaine
 function getTargetUrlFromHost(host: string, path: string): string | null {
-  // Ex: www-google-com.localhost:3000 => www.google.com
+  // Ex: lofi-jingle-avp--vercel-app.localhost:3000 => lofi-jingle-avp.vercel.app
   const match = host.match(/^([^.]+)\.localhost(?::\d+)?$/);
   if (!match) return null;
-  const domainPart = match[1].replace(/-/g, ".");
-  return `https://${domainPart}${path}`;
+
+  // Sépare le nom du site du domaine principal
+  const parts = match[1].split("--");
+  if (parts.length === 1) {
+    // Cas simple : pas de séparation de domaine
+    return `https://${parts[0].replace(/-/g, ".")}${path}`;
+  }
+
+  // Cas avec séparation de domaine (ex: lofi-jingle-avp--vercel-app)
+  const siteName = parts[0]; // garde les tirets pour les sous-parties du nom
+  const domain = parts[1].replace(/-/g, ".");
+  return `https://${siteName}.${domain}${path}`;
 }
 
 // Servir le JS généré
@@ -42,7 +52,8 @@ app.get("/", async (req: Request, res: Response) => {
     );
     res.set("Content-Type", "text/html");
     res.send(html);
-  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
     res.status(500).send("Error fetching target URL");
   }
 });
@@ -75,7 +86,8 @@ app.use(async (req: Request, res: Response, next) => {
     } else {
       res.status(500).send("No resource body");
     }
-  } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
     res.status(500).send("Error fetching resource");
   }
 });
