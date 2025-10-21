@@ -1,5 +1,4 @@
 import { BackSide } from "three";
-import { LayerMaterial, Depth, Noise, Fresnel } from "lamina";
 import { Text3D, Center } from "@react-three/drei";
 
 interface SkyBoxProps {
@@ -45,25 +44,13 @@ export default function SkyBox({ showWelcome = false }: SkyBoxProps) {
     <>
       <mesh scale={[100, 100, 100]}>
         <sphereGeometry args={[1, 64, 64]} />
-        <LayerMaterial side={BackSide}>
-          <Fresnel
-            color="#1e293b"
-            alpha={1}
-            mode="normal"
-            intensity={0.3}
-            power={2}
-          />
-          <Depth
-            colorA="#00ffff"
-            colorB="#ff8f00"
-            alpha={0.5}
-            mode="normal"
-            near={0}
-            far={300}
-            origin={[100, 100, 100]}
-          />
-          <Noise mapping="local" type="cell" scale={0.5} mode="softlight" />
-        </LayerMaterial>
+        <meshPhysicalMaterial
+          side={BackSide}
+          color="#1e293b"
+          metalness={0.2}
+          roughness={0.8}
+          envMapIntensity={0.5}
+        />
       </mesh>
       {showWelcome && <Welcome />}
     </>

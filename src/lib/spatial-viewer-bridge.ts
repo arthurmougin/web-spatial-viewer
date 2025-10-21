@@ -1,64 +1,103 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Sauvegarde des fonctions console originales
+const originalConsole = {
+  log: console.log.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  debug: console.debug.bind(console),
+};
+
+// Système de log pour le bridge
+function bridgeLog(
+  level: "log" | "info" | "warn" | "error" | "debug",
+  ...args: any[]
+) {
+  // Log local
+  originalConsole[level](...args);
+
+  // Envoyer au parent
+  try {
+    window.parent?.postMessage(
+      {
+        type: "BRIDGE_LOG",
+        data: {
+          level,
+          message: args
+            .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+            .join(" "),
+          data: args.length > 1 ? args.slice(1) : undefined,
+          timestamp: Date.now(),
+        },
+      },
+      "*"
+    );
+  } catch (error) {
+    originalConsole.error("[Bridge] Erreur d'envoi des logs:", error);
+  }
+}
+
+// Override des fonctions console
+console.log = (...args: any[]) => bridgeLog("log", ...args);
+console.info = (...args: any[]) => bridgeLog("info", ...args);
+console.warn = (...args: any[]) => bridgeLog("warn", ...args);
+console.error = (...args: any[]) => bridgeLog("error", ...args);
+console.debug = (...args: any[]) => bridgeLog("debug", ...args);
+
+// Premier log pour vérifier
+console.log("=== SPATIAL VIEWER BRIDGE LOGGING READY ===");
+
+// Import des dépendances
+import { findAndLoadManifest } from "./manifest-loader";
+
+// Types
 declare global {
   interface Window {
-    SpatialViewerBridge: SpatialViewerBridge;
+    bridgeManager: BridgeManager;
   }
 }
 
-export class SpatialViewerBridge {
-  private static instance: SpatialViewerBridge;
-  private parentOrigin: string;
+class BridgeManager {
+  private parentOrigin = "*";
 
-  private constructor() {
-    this.parentOrigin = "*"; // À modifier en production pour plus de sécurité
-    this.setupMessageListener();
-    console.log("bonjour");
+  constructor() {
+    console.log("[Bridge] Démarrage...");
+    this.initialize();
   }
 
-  public static getInstance(): SpatialViewerBridge {
-    if (!SpatialViewerBridge.instance) {
-      SpatialViewerBridge.instance = new SpatialViewerBridge();
-    }
-    return SpatialViewerBridge.instance;
-  }
-
-  private setupMessageListener(): void {
-    window.addEventListener("message", this.handleMessage.bind(this));
-  }
-
-  private handleMessage(event: MessageEvent): void {
-    // Vérification de l'origine en production
-    // if (event.origin !== this.parentOrigin) return;
-
+  private async initialize() {
     try {
-      const data = event.data;
-      switch (data.type) {
-        case "INIT":
-          this.handleInit(data);
-          break;
-        // Ajoutez d'autres cas selon vos besoins
-        default:
-          console.warn("Message type not handled:", data.type);
+      // 1. Charger le manifest
+      const manifest = await findAndLoadManifest();
+      console.log("[Bridge] Manifest trouvé:", manifest);
+
+      // 2. Envoyer le manifest au parent
+      window.parent.postMessage(
+        { type: "MANIFEST_READY", manifest },
+        this.parentOrigin
+      );
+
+      // 3. Notifier quand la page est chargée
+      if (document.readyState === "complete") {
+        this.notifyReady();
+      } else {
+        window.addEventListener("load", () => this.notifyReady());
       }
     } catch (error) {
-      console.error("Error handling message:", error);
+      console.error("[Bridge] Erreur d'initialisation:", error);
     }
   }
 
-  private handleInit(data: any): void {
-    console.log(data);
-    // Répondre au viewer pour confirmer que la connexion est établie
-    window.parent.postMessage(
-      { type: "INIT_RESPONSE", status: "ready" },
-      this.parentOrigin
-    );
-  }
-
-  // Méthodes publiques pour interagir avec le viewer
-  public sendToViewer(type: string, data: any): void {
-    window.parent.postMessage({ type, data }, this.parentOrigin);
+  private notifyReady() {
+    console.log("[Bridge] Page chargée");
+    window.parent.postMessage({ type: "FRAME_READY" }, this.parentOrigin);
   }
 }
 
-// Auto-initialisation
-window.SpatialViewerBridge = SpatialViewerBridge.getInstance();
+// Démarrage immédiat
+console.log("[Bridge] Chargement du script...");
+const bridge = new BridgeManager();
+
+// Export global pour debug
+(window as any).bridgeManager = bridge;

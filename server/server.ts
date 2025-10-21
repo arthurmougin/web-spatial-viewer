@@ -74,14 +74,24 @@ app.use(async (req: Request, res: Response, next) => {
     });
     if (!response.ok)
       return res.status(response.status).send("Resource not found");
-    if (response.body) {
-      res.set(
-        "Content-Type",
-        response.headers.get("content-type") || "application/octet-stream"
+
+    const contentType =
+      response.headers.get("content-type") || "application/octet-stream";
+    res.set("Content-Type", contentType);
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Headers", "*");
+
+    // Si c'est du HTML, injecter le script
+    if (contentType.includes("text/html")) {
+      const jsFileUrl = `http://${host}/lib/spatial-viewer-bridge.js`;
+      const html = await response.text();
+      const modifiedHtml = html.replace(
+        /<\/body>/i,
+        `<script src="${jsFileUrl}"></script></body>`
       );
-      // Ajout du header CORS pour permettre le chargement XHR/fetch
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Access-Control-Allow-Headers", "*");
+      res.send(modifiedHtml);
+    } else if (response.body) {
+      // Pour les autres types de contenu, transférer tel quel
       response.body.pipe(res);
     } else {
       res.status(500).send("No resource body");
