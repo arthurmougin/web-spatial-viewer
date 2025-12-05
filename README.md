@@ -69,7 +69,7 @@ The project requires three processes running simultaneously:
 
 3. **Access the Application**
 
-   Open [http://localhost:5173](http://localhost:5173) in your browser
+   Open [https://localhost:5173](https://localhost:5173) in your browser
 
 ### Port Configuration
 

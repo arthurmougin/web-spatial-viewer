@@ -30,16 +30,16 @@ export function WebFrame({
 
   useEffect(() => {
     const handleMouseDown = () => {
-      if (containerRef.current) {
-        containerRef.current.style.pointerEvents = "none";
-        containerRef.current.style.opacity = "0.6";
+      if (iframeRef.current) {
+        iframeRef.current.style.pointerEvents = "none";
+        iframeRef.current.style.filter = "blur(2px)";
       }
     };
 
     const handleMouseUp = () => {
-      if (containerRef.current) {
-        containerRef.current.style.pointerEvents = "auto";
-        containerRef.current.style.opacity = "1";
+      if (iframeRef.current) {
+        iframeRef.current.style.pointerEvents = "auto";
+        iframeRef.current.style.filter = "none";
       }
     };
 
@@ -52,38 +52,6 @@ export function WebFrame({
     };
   }, []);
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "INIT_RESPONSE") {
-        console.log("Frame connecté au viewer:", event.data);
-      }
-      console.log("Message reçu de la frame:", event.data);
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
-
-  const sendToFrame = (type: string, data: unknown) => {
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage({ type, data }, "*");
-    }
-  };
-
-  useEffect(() => {
-    const onLoad = () => {
-      sendToFrame("INIT", { hello: "viewer" });
-    };
-    const iframe = iframeRef.current;
-    if (iframe) {
-      iframe.addEventListener("load", onLoad);
-    }
-    return () => {
-      if (iframe) {
-        iframe.removeEventListener("load", onLoad);
-      }
-    };
-  }, [src]);
 
   const htmlScale = 0.001; // Facteur d'échelle pour convertir les pixels en unités Three.js
   const scaledWidth = frameSize.width * htmlScale;
@@ -102,30 +70,17 @@ export function WebFrame({
         height: `${frameSize.height}px`,
       }}
     >
-      <div
-        ref={containerRef}
+      <iframe
+        ref={iframeRef}
+        src={src}
         style={{
           width: "100%",
           height: "100%",
-          background: "#fff",
-          boxShadow: "0 0 20px rgba(0,0,0,0.3)",
-          overflow: "hidden",
-          transition: "opacity 0.15s ease-out",
+          border: "none",
+          transition: "filter 0.3s ease",
         }}
-      >
-        <div style={{ position: "relative", width: "100%", height: "100%" }}>
-          <iframe
-            ref={iframeRef}
-            src={src}
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-            }}
-            title="Site Web"
-          />
-        </div>
-      </div>
+        title="Site Web"
+      />
     </Html>
   );
 }

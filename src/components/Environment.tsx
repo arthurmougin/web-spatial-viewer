@@ -7,7 +7,7 @@ interface SkyBoxProps {
 }
 
 const Welcome = () => (
-  <Center position={[0, 0, 0]} rotation={[0, Math.PI, 0]}>
+  <Center position={[0, 0, 0]} rotation={[0, Math.PI, 0]} scale={0.8}>
     <Text3D
       font="/fonts/helvetiker_regular.typeface.json"
       size={0.15}
@@ -19,7 +19,7 @@ const Welcome = () => (
       bevelOffset={0}
       bevelSegments={3}
     >
-      Web Spatial Viewer
+      Web Spatial Viewer 
       <meshStandardMaterial color="#299bf8" metalness={0.5} roughness={0.5} />
     </Text3D>
     <Text3D
@@ -40,9 +40,12 @@ const Welcome = () => (
   </Center>
 );
 
-export default function SkyBox({ showWelcome = false }: SkyBoxProps) {
+export default function Environment({ showWelcome = false }: SkyBoxProps) {
   return (
     <>
+      <ambientLight intensity={0.8} />
+      <directionalLight color="white" position={[0, 1, -1]} intensity={1} />
+      <pointLight position={[2, 2, 2]} intensity={1} />
       <mesh scale={[100, 100, 100]}>
         <sphereGeometry args={[1, 64, 64]} />
         <LayerMaterial side={BackSide}>

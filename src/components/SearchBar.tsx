@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import styles from "./SearchBar.module.css";
 
 interface SearchBarProps {
@@ -6,12 +6,19 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ onSubmit }: SearchBarProps) {
-  const [url, setUrl] = React.useState("https://google.com");
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const [url, setUrl] = useState("https://google.com");
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSubmit(url);
   };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get("url");
+    if (urlParam) {
+      setUrl(decodeURIComponent(urlParam));
+      onSubmit(decodeURIComponent(urlParam));
+    }
+  }, []);
 
   return (
     <div className={styles.container}>

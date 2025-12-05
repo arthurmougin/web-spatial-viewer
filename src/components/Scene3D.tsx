@@ -1,31 +1,22 @@
-import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import SkyBox from "./SkyBox";
+import Environment from "./Environment";
+import { Canvas } from "@react-three/fiber";
+import { usePWAStore } from "../store/pwa.store";
 import { WebFrame } from "./WebFrame";
 
-interface Scene3DProps {
-  iframeSrc?: string;
-  defaultSize?: {
-    width: number;
-    height: number;
-  };
-}
-
-export function Scene3D({ iframeSrc, defaultSize }: Scene3DProps) {
+export function Scene3D() {
+  const pages = usePWAStore( (state) => state.pages ) ;
   return (
     <Canvas camera={{ position: [0, 0, -0.8] }}>
-      <ambientLight intensity={0.8} />
-      <directionalLight color="white" position={[0, 1, -1]} intensity={1} />
-      <pointLight position={[2, 2, 2]} intensity={1} />
-      {iframeSrc && (
+      {pages && pages.map((page, index) => (
         <WebFrame
-          src={iframeSrc}
+          key={index}
+          src={page.toString()}
           position={[0, 0, 0]}
-          defaultSize={defaultSize}
         />
-      )}
+      ))}
       <OrbitControls makeDefault />
-      <SkyBox showWelcome={!iframeSrc} />
+      <Environment showWelcome={false} />
     </Canvas>
   );
 }
