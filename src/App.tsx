@@ -1,11 +1,11 @@
-import { BridgeReceiver } from "./classes/bridge-receiver";
 import { Scene3D } from "./components/Scene3D";
 import { SearchBar } from "./components/SearchBar";
-import { usePWAStore } from "./store/pwa.store";
+import { usePagesStore } from "./store/pages.store";
 
 function App() {
-  const loadURL = usePWAStore((state) => state.loadURL);
-  BridgeReceiver.getInstance();
+  const handlePageSubmission = usePagesStore(
+    (state) => state.handlePageSubmission
+  );
   return (
     <div
       style={{
@@ -15,7 +15,7 @@ function App() {
         overflow: "hidden",
       }}
     >
-      <SearchBar onSubmit={loadURL} />
+      <SearchBar onSubmit={handlePageSubmission} />
       <Scene3D />
     </div>
   );

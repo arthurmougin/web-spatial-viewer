@@ -1,24 +1,18 @@
 import { create } from 'zustand';
-import { FetchManifest, proxyFyUrl } from '../utils/pwa.utils';
+import { FetchManifest } from '../utils/pwa.utils';
 import type { WebSpatialSDKSignature } from '../../types/bridge';
+import type { WebManifest } from '../../types/pwa';
 
 interface PWAState {
-  manifest: Partial<WebManifest>|null;
-  pages : URL[];
+  manifest: WebManifest|null;
   webSpatialSDKSignature: WebSpatialSDKSignature | null;
-  loadURL: (url: string) => Promise<void>;
   loadManifest: (url: string) => Promise<void>; 
   setSpatialSDKSignature: (signature: WebSpatialSDKSignature | null) => void;
 }
 
 export const usePWAStore = create<PWAState>((set) => ({
   manifest: null,
-  pages : [],
   webSpatialSDKSignature: null,
-  loadURL : async (url: string) => {
-    const proxiedUrl = proxyFyUrl(url);
-    set({ pages: [proxiedUrl] });
-  },
   loadManifest : async (url: string) => {
     const manifest = await FetchManifest(url);
     set({ manifest });  
