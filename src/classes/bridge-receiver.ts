@@ -1,3 +1,6 @@
+import { use } from "react";
+import type { IBridgeInitData, IBridgeMessage } from "../../types/bridge";
+import { usePWAStore } from "../store/pwa.store";
 
 export class BridgeReceiver {
   iframes: HTMLIFrameElement[] = [];
@@ -5,7 +8,7 @@ export class BridgeReceiver {
 
   private constructor() {
     console.log("BridgeReceiver initialized");
-    this.setupMessageListener();
+    window.onmessage = this.messageListener.bind(this);
   }
 
   public static getInstance(): BridgeReceiver {
@@ -15,18 +18,36 @@ export class BridgeReceiver {
     return BridgeReceiver.instance;
   }
 
-  private setupMessageListener(): void {
-    window.onmessage = (event) => {
-      console.log("Message received in BridgeReceiver:", event);
-      const { type, data } = event.data;
-      console.log(`Received message of type: ${type}`, data);
-      // Handle different message types here
-    };
+  private messageListener(event: MessageEvent): void {
+    console.log("Message received in BridgeReceiver:", event);
+    // Handle different message types here
+
+    if (event.data && event.data.type) {
+      switch (event.data.type) {
+        case "INIT": {
+          console.log("INIT message received with data:", event.data.data);
+          const data = (event.data as IBridgeInitData).data;
+          usePWAStore.getState().setSpatialSDKSignature(data.sdkSignature);
+          if( data.manifestUrl) 
+            usePWAStore.getState().loadManifest(data.manifestUrl );
+          break;
+        }
+        case "NETWORK_IDLE": {
+          console.log("NETWORK_IDLE message received");
+          // Handle network idle event if needed
+          break;
+        }
+        default:
+          console.warn("Unknown message type received:", event.data.type);
+      }
+    } else {
+      console.warn("Received message without type:", event.data);
+    }
   }
 
   // Méthodes publiques pour interagir avec le viewer
-  public sendToViewer(type: string, data: any): void {
-    window.parent.postMessage({ type, data });
+  public sendToViewer(data: IBridgeMessage): void {
+    window.parent.postMessage({...data}, "*");
   }
 
   addIframe(iframe: HTMLIFrameElement): void {

@@ -32,7 +32,6 @@ app.use("/lib", express.static(path.join(__dirname, "../dist/lib")));
 
 // Fonction de proxy pour les ressources
 async function proxyResource(req: Request, res: Response) {
-  console.log("Proxying resource for:", req.path);
   const host = req.headers.host || "";
   const targetUrl = getTargetUrlFromHost(host, req.path);
   if (!targetUrl) return res.status(400).send("Invalid host format");
@@ -77,13 +76,9 @@ app.get('*path', async (req: Request, res: Response, next) => {
   if (!acceptHeader.includes("text/html")) {
     return next();
   }
-
-  console.log("Serving proxied HTML for:", req.path);
   const host = req.headers.host || "";
   const targetUrl = getTargetUrlFromHost(host, req.path);
   if (!targetUrl) return res.status(400).send("Invalid host format");
-
-  console.log(req) 
   const jsFileUrl = `/lib/spatial-viewer-bridge.js`;
 
   try {
@@ -107,10 +102,10 @@ app.get('*path', async (req: Request, res: Response, next) => {
     }
 
     let html = await response.text();
-    // Injection du JS avant </body>
+    // Injection du JS avant </head>
     html = html.replace(
-      /<\/body>/i,
-      `<script src="${jsFileUrl}" type="module"></script></body>`
+      /<\/head>/i,
+      `<script src="${jsFileUrl}" type="module"></script></head>`
     );
     res.set("Content-Type", "text/html");
     res.send(html);

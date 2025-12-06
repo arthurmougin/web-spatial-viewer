@@ -1,6 +1,9 @@
+import type { BridgeMessageType,IBridgeInitData, IBridgeMessage, WebSpatialSDKSignature } from "../../types/bridge";
+
 declare global {
   interface Window {
     SpatialViewerBridge: SpatialViewerBridge;
+    __webspatialsdk__?: WebSpatialSDKSignature;
   }
 }
 
@@ -9,9 +12,8 @@ export class SpatialViewerBridge {
 
   private constructor() {
     console.log("bonjour");
-    this.sendToViewer();
-    console.log("message sent to viewer");
     window.onmessage = this.receiveMessage.bind(this);
+    this.initialConversation();
   }
 
   public static getInstance(): SpatialViewerBridge {
@@ -21,13 +23,33 @@ export class SpatialViewerBridge {
     return SpatialViewerBridge.instance;
   }
 
+  private initialConversation(){
+    const nextLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
+    const manifestUrl = nextLink ? nextLink.href : null;
+    const sdkSignature = window.__webspatialsdk__ || null;
 
-  // Méthodes publiques pour interagir avec le viewer
-   
-  public sendToViewer(): void {
-    console.log(window.top);
+    const initMessage: IBridgeInitData = {
+      type: "INIT" as BridgeMessageType.INIT,
+      data: {
+        manifestUrl,
+        sdkSignature,
+      },
+    };
+    this.sendToViewer(initMessage);
 
-    window.top!.postMessage("bonsoir", "*");
+    //listen to network idle before sending NETWORK_IDLE message
+    window.addEventListener('load', () => {
+      console.log("Page fully loaded, sending NETWORK_IDLE message");
+      const networkIdleMessage: IBridgeMessage = {
+        type: "NETWORK_IDLE" as BridgeMessageType.NETWORK_IDLE,
+        data: null,
+      };
+      this.sendToViewer(networkIdleMessage);
+    });
+  }
+
+  public sendToViewer(data:IBridgeMessage): void {
+    window.top!.postMessage({...data}, "*");
   }
 
   private receiveMessage(event: MessageEvent): void {

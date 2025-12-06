@@ -1,9 +1,6 @@
 
 //suppose the manifest.webmanifest is located at the root of the PWA
-export async function FetchManifest(url: string): Promise<Partial<WebManifest>|null> {
-  const proxyUrl = proxyFyUrl(url);
-  console.log("Fetching manifest from proxy URL:", proxyUrl);
-  const manifestUrl =  new URL("/manifest.webmanifest", proxyUrl).toString();
+export async function FetchManifest(manifestUrl: string): Promise<Partial<WebManifest>|null> {
   const response = await fetch(manifestUrl);
   if(response.ok) {
     const manifest: WebManifest = await response.json();

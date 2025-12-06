@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Html } from "@react-three/drei";
+import { usePWAStore } from "../store/pwa.store";
 
 const DEFAULT_FRAME_SIZE = {
   width: 1280,
@@ -14,19 +15,17 @@ interface FrameSize {
 interface WebFrameProps {
   src: string;
   position?: [number, number, number];
-  defaultSize?: FrameSize;
 }
 
 export function WebFrame({
   src,
   position = [5, 0, 0],
-  defaultSize,
 }: WebFrameProps) {
+  const manifest = usePWAStore((state) => state.manifest);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
-  const frameSize: FrameSize = defaultSize || DEFAULT_FRAME_SIZE;
+  const [frameSize, setFrameSize] = useState<FrameSize>(DEFAULT_FRAME_SIZE);
 
   useEffect(() => {
     const handleMouseDown = () => {
@@ -52,10 +51,12 @@ export function WebFrame({
     };
   }, []);
 
+  useEffect(() => {
+    if(manifest && manifest.xr_main_scene && manifest.xr_main_scene.default_size) {
+      setFrameSize(manifest.xr_main_scene.default_size);
+    }
 
-  const htmlScale = 0.001; // Facteur d'échelle pour convertir les pixels en unités Three.js
-  const scaledWidth = frameSize.width * htmlScale;
-  const scaledHeight = frameSize.height * htmlScale;
+  }, [manifest]);
 
   return (
     <Html
