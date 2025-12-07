@@ -67,6 +67,13 @@ button:focus-visible {
   }
 }
 
+/* #region web frame styles */
+/*.web-frame {
+  border-radius: 16px;²
+  overflow: hidden;
+}*/
+/* #endregion */
+
 /* #region splash screen */
 .splash-screen {
   position: absolute;

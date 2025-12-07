@@ -2,6 +2,7 @@ import { Html } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
+import "./RoundedPlaneGeometry";
 
 const DEFAULT_FRAME_SIZE = {
   width: 1280,
@@ -49,7 +50,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     if (
@@ -63,15 +64,14 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
 
   useEffect(() => {
     let timer = null;
-    if (!page?.showSplash) {
-      console.log("Hiding splash screen for page", id);
+    if (!page?.showSplash && showSplash) {
       splashScreenRef.current?.classList.add("hidden");
       timer = setTimeout(() => {
         setShowSplash(false);
       }, 1000);
     }
     return () => (timer ? clearTimeout(timer) : undefined);
-  }, [page]);
+  }, [page?.showSplash, showSplash]);
 
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
@@ -84,6 +84,12 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           width: `${frameSize.width}px`,
           height: `${frameSize.height}px`,
         }}
+        className="web-frame"
+        geometry={
+          <roundedPlaneGeometry
+            args={[frameSize.width / 800, frameSize.height / 800, 0.02]}
+          />
+        }
       >
         {showSplash && ( //page?.showSplash ||
           <div
