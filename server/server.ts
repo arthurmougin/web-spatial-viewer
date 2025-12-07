@@ -70,7 +70,7 @@ async function proxyResource(req: Request, res: Response) {
 }
 
 // Route pour servir le HTML injecté (pour n'importe quel chemin de page)
-app.get('*path', async (req: Request, res: Response, next) => {
+app.get("*path", async (req: Request, res: Response, next) => {
   // On ne traite que les requêtes qui attendent du HTML
   const acceptHeader = req.headers.accept || "";
   if (!acceptHeader.includes("text/html")) {

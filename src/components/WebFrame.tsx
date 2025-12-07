@@ -1,6 +1,5 @@
 import { Html } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
-import { defaultWebManifest } from "../../types/pwa";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
 
@@ -23,6 +22,8 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   const page = usePagesStore((state) => state.getPage(id));
   const manifest = usePWAStore((state) => state.manifest);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const splashScreenRef = useRef<HTMLDivElement>(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
   const [frameSize, setFrameSize] = useState<FrameSize>(DEFAULT_FRAME_SIZE);
@@ -30,15 +31,13 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   useEffect(() => {
     const handleMouseDown = () => {
       if (iframeRef.current) {
-        iframeRef.current.style.pointerEvents = "none";
-        iframeRef.current.style.filter = "blur(2px)";
+        iframeRef.current.classList.add("blurred");
       }
     };
 
     const handleMouseUp = () => {
       if (iframeRef.current) {
-        iframeRef.current.style.pointerEvents = "auto";
-        iframeRef.current.style.filter = "none";
+        iframeRef.current.classList.remove("blurred");
       }
     };
 
@@ -62,6 +61,18 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     }
   }, [manifest]);
 
+  useEffect(() => {
+    let timer = null;
+    if (!page?.showSplash) {
+      console.log("Hiding splash screen for page", id);
+      splashScreenRef.current?.classList.add("hidden");
+      timer = setTimeout(() => {
+        setShowSplash(false);
+      }, 1000);
+    }
+    return () => (timer ? clearTimeout(timer) : undefined);
+  }, [page]);
+
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <Html
@@ -74,23 +85,11 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           height: `${frameSize.height}px`,
         }}
       >
-        {true && ( //page?.showSplash ||
+        {showSplash && ( //page?.showSplash ||
           <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              backgroundColor:
-                manifest?.background_color ||
-                defaultWebManifest.background_color,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1,
-              color: manifest?.theme_color || defaultWebManifest.theme_color,
-            }}
+            className="splash-screen"
+            ref={splashScreenRef}
+            style={{ width: frameSize.width, height: frameSize.height }}
           >
             {manifest?.icons && manifest.icons.length > 0 && (
               <picture>
@@ -107,23 +106,16 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
                       : ""
                   }
                   alt={`App Icon for ${manifest?.name || "App"}`}
-                  style={{ width: 64, height: 64, marginRight: 16 }}
                 />
               </picture>
             )}
-            {manifest?.name || "Loading..."}
+            <h2>{manifest?.name || "Loading..."}</h2>
           </div>
         )}
         <iframe
           id={id.toString()}
           ref={iframeRef}
           src={page?.url.toString()}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            transition: "filter 0.3s ease",
-          }}
           title="Site Web"
         />
       </Html>

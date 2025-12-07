@@ -1,10 +1,31 @@
+import type { WebManifest, WebManifestIcon } from "../../types/pwa";
 
 //suppose the manifest.webmanifest is located at the root of the PWA
-export async function FetchManifest(manifestUrl: string): Promise<Partial<WebManifest>|null> {
+export async function FetchManifest(
+  manifestUrl: string
+): Promise<WebManifest | null> {
+  console.log("Fetching manifest from:", manifestUrl);
   const response = await fetch(manifestUrl);
-  if(response.ok) {
+  if (response.ok) {
     const manifest: WebManifest = await response.json();
     console.log("Manifest fetched successfully:", manifest);
+    // Convertir les chemins relatifs des icônes en absolus et proxyfiés
+    if (manifest.icons) {
+      manifest.icons = manifest.icons.map((icon) => {
+        let src = icon.src;
+        if (src.startsWith("/")) {
+          src = src.substring(1);
+        }
+        // Les chemins relatifs dans le manifest sont relatifs à l'URL du manifest lui-même.
+        const absoluteIconUrl = new URL(src, manifestUrl).toString();
+        console.log("Absolute icon URL:", absoluteIconUrl);
+        return {
+          ...icon,
+          src: absoluteIconUrl,
+        };
+      });
+    }
+
     return manifest;
   }
   console.warn("No manifest found at:", manifestUrl);
@@ -16,20 +37,21 @@ export const checkWebManifest = async (proxyUrl: string) => {
     const response = await fetch(manifestUrl);
     if (response.ok) {
       const manifest: WebManifest = await response.json();
-     // console.log("Web Manifest trouvé:", manifest);
+      // console.log("Web Manifest trouvé:", manifest);
 
       // Convertir les chemins relatifs des icônes en absolus
-      manifest.icons = manifest.icons.map((icon) => ({
+      manifest.icons = manifest.icons?.map((icon) => ({
         ...icon,
         src: new URL(icon.src, proxyUrl).toString(),
       }));
 
       // Vérifier que les icônes requises sont présentes
       const hasRequiredIcons =
-        manifest.icons.some((icon) => icon.purpose === "any") &&
+        manifest.icons?.some((icon) => icon.purpose === "any") &&
         manifest.icons.some(
           (icon) =>
             icon.purpose === "maskable" &&
+            icon.sizes &&
             parseInt(icon.sizes.split("x")[0]) >= 1024
         );
 
@@ -56,8 +78,11 @@ export const checkWebManifest = async (proxyUrl: string) => {
   return null;
 };
 
-
-export const isUrlInScope = (url: string, scopePath: string, baseUrl: string) => {
+export const isUrlInScope = (
+  url: string,
+  scopePath: string,
+  baseUrl: string
+) => {
   try {
     const urlObj = new URL(url);
     const scopeUrl = new URL(scopePath, baseUrl);
@@ -71,20 +96,21 @@ export const getLoadingIcon = (icons: WebManifestIcon[]) => {
   // Préfère une icône maskable de grande taille, sinon prend la plus grande disponible
   const maskableIcon = icons.find(
     (icon) =>
-      icon.purpose === "maskable" && parseInt(icon.sizes.split("x")[0]) >= 512
+      icon.purpose === "maskable" &&
+      icon.sizes &&
+      parseInt(icon.sizes.split("x")[0]) >= 512
   );
   if (maskableIcon) return maskableIcon.src;
 
   // Trie les icônes par taille et prend la plus grande
   const sortedIcons = [...icons].sort((a, b) => {
-    const sizeA = parseInt(a.sizes.split("x")[0]);
-    const sizeB = parseInt(b.sizes.split("x")[0]);
+    const sizeA = a.sizes ? parseInt(a.sizes.split("x")[0]) : 0;
+    const sizeB = b.sizes ? parseInt(b.sizes.split("x")[0]) : 0;
     return sizeB - sizeA;
   });
 
   return sortedIcons[0]?.src || null;
 };
-
 
 export function proxyFyUrl(url: string): URL {
   const { hostname, pathname, search } = new URL(url);
@@ -95,9 +121,7 @@ export function proxyFyUrl(url: string): URL {
 
   // Construire le sous-domaine pour le proxy
   const proxyHostname =
-    subParts.length > 0
-      ? `${subParts.join("-")}--${mainDomain}`
-      : mainDomain;
+    subParts.length > 0 ? `${subParts.join("-")}--${mainDomain}` : mainDomain;
 
   const proxyPort = 3000;
   const isSSL = location.protocol === "https:";
@@ -117,9 +141,11 @@ export function UnProxyFyUrl(proxyUrl: URL): URL {
   const parts = match[1].split("--");
   if (parts.length === 1) {
     // Cas simple : pas de séparation de domaine
-    return new URL(`https://${parts[0].replace(/-/g, ".")}${pathname}${search}`);
+    return new URL(
+      `https://${parts[0].replace(/-/g, ".")}${pathname}${search}`
+    );
   }
-  
+
   // Cas avec séparation de domaine (ex: lofi-jingle-avp--vercel-app)
   const siteName = parts[0]; // garde les tirets pour les sous-parties du nom
   const domain = parts[1].replace(/-/g, ".");
