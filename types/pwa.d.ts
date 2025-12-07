@@ -86,7 +86,7 @@ type DisplayMode = "fullscreen" | "standalone" | "minimal-ui" | "browser";
 
 interface WebManifest {
   // background for the UI and splash screen
-  background_color?: string;
+  background_color: string;
   categories?: category[];
   // meant for app store listing
   description?: string;
@@ -117,7 +117,7 @@ interface WebManifest {
   // Hint to be interpreted as we please
   start_url: string;
   // Default theme color for the OS
-  theme_color?: string;
+  theme_color: string;
   xr_main_scene?: {
     default_size?: {
       width: number;
@@ -129,7 +129,7 @@ interface WebManifest {
 export const defaultWebManifest: WebManifest = {
   name: "I aM aN IdIoT wHo FoRgOt To SeT a NaMe In ThE WeB MaNiFeSt",
   display: "minimal-ui",
-  background_color: "#ffffffff",
-  theme_color: "#c0cdd0ff",
+  background_color: "#ffffff",
+  theme_color: "#c0cdd0",
   start_url: "https://google.com",
 };

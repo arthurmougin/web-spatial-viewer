@@ -1,4 +1,14 @@
 import { Html } from "@react-three/drei";
+import { Container, Text } from "@react-three/uikit";
+import { Button } from "@react-three/uikit-default";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  House,
+  RefreshCcw,
+  X,
+} from "@react-three/uikit-lucide";
 import { useEffect, useRef, useState } from "react";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
@@ -29,6 +39,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
   const [frameSize, setFrameSize] = useState<FrameSize>(DEFAULT_FRAME_SIZE);
 
+  // Gestion du flou quand l'on tourne la scene
   useEffect(() => {
     const handleMouseDown = () => {
       if (iframeRef.current) {
@@ -44,14 +55,19 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
 
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mouseup", handleMouseUp);
-    page?.pageListener.setIframe(iframeRef);
 
     return () => {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
     };
+  }, []);
+
+  // Associer le listener de la page à l'iframe
+  useEffect(() => {
+    page?.pageListener.setIframe(iframeRef);
   }, [page]);
 
+  // Gérer le manifest pour définir la taille du cadre
   useEffect(() => {
     if (
       manifest &&
@@ -62,6 +78,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     }
   }, [manifest]);
 
+  // Gérer l'affichage de l'écran de démarrage
   useEffect(() => {
     let timer = null;
     if (!page?.showSplash && showSplash) {
@@ -75,6 +92,88 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
 
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
+      <group position={[0, 0.08 + frameSize.height / 800 / 2, 0]}>
+        <Container
+          width={frameSize.width / 10}
+          height={8}
+          backgroundColor={manifest?.background_color || "#ffffff"}
+          borderRadius={5}
+          flexDirection={"row"}
+          justifyContent={"space-between"}
+          alignItems={"center"}
+          paddingX={1}
+          transformScale={0.8}
+        >
+          <Button
+            size="icon"
+            height={6}
+            width={6}
+            borderRadius={3}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <ChevronLeft width={4} height={4} />
+          </Button>
+          <Button
+            size="icon"
+            height={6}
+            width={6}
+            borderRadius={3}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <ChevronRight width={4} height={4} />
+          </Button>
+          <Container
+            height={6}
+            width={frameSize.width / 10 - 35}
+            borderRadius={3}
+            flexDirection={"row"}
+            alignItems={"center"}
+            justifyContent={"space-between"}
+            paddingX={1}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <Text fontSize={3} marginLeft={1} color="white">
+              https://google.com
+            </Text>
+            <Button
+              size="icon"
+              height={5}
+              width={5}
+              borderRadius={2.5}
+              backgroundColor={manifest?.theme_color || "#878995"}
+            >
+              <RefreshCcw width={2} height={2} />
+            </Button>
+          </Container>
+          <Button
+            size="icon"
+            height={6}
+            width={6}
+            borderRadius={3}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <Copy width={3} height={3} />
+          </Button>
+          <Button
+            size="icon"
+            height={6}
+            width={6}
+            borderRadius={3}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <House width={3} height={3} />
+          </Button>
+          <Button
+            size="icon"
+            height={6}
+            width={6}
+            borderRadius={3}
+            backgroundColor={manifest?.theme_color || "#878995"}
+          >
+            <X width={3} height={3} />
+          </Button>
+        </Container>
+      </group>
       <Html
         transform
         distanceFactor={0.5}
@@ -91,7 +190,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           />
         }
       >
-        {showSplash && ( //page?.showSplash ||
+        {showSplash && (
           <div
             className="splash-screen"
             ref={splashScreenRef}
@@ -99,12 +198,10 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           >
             {manifest?.icons && manifest.icons.length > 0 && (
               <picture>
-                {manifest?.icons && manifest.icons.length > 0 && (
-                  <source
-                    srcSet={manifest.icons[0].src}
-                    type={manifest.icons[0].type}
-                  />
-                )}
+                {manifest?.icons &&
+                  manifest.icons.map((icon) => (
+                    <source key={icon.src} srcSet={icon.src} type={icon.type} />
+                  ))}
                 <img
                   src={
                     manifest?.icons && manifest.icons.length > 0

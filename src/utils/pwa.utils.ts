@@ -4,12 +4,14 @@ import type { WebManifest, WebManifestIcon } from "../../types/pwa";
 export async function FetchManifest(
   manifestUrl: string
 ): Promise<WebManifest | null> {
-  console.log("Fetching manifest from:", manifestUrl);
+  // fetch the manifest file
   const response = await fetch(manifestUrl);
+
+  // if the response is ok, parse and return the manifest
   if (response.ok) {
     const manifest: WebManifest = await response.json();
-    console.log("Manifest fetched successfully:", manifest);
-    // Convertir les chemins relatifs des icônes en absolus et proxyfiés
+
+    // Convert relative icon paths to absolute URLs
     if (manifest.icons) {
       manifest.icons = manifest.icons.map((icon) => {
         let src = icon.src;
@@ -18,7 +20,6 @@ export async function FetchManifest(
         }
         // Les chemins relatifs dans le manifest sont relatifs à l'URL du manifest lui-même.
         const absoluteIconUrl = new URL(src, manifestUrl).toString();
-        console.log("Absolute icon URL:", absoluteIconUrl);
         return {
           ...icon,
           src: absoluteIconUrl,
