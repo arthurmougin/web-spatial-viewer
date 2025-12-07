@@ -1,6 +1,6 @@
+import { Center, Text3D } from "@react-three/drei";
+import { Depth, Fresnel, LayerMaterial, Noise } from "lamina";
 import { BackSide } from "three";
-import { LayerMaterial, Depth, Noise, Fresnel } from "lamina";
-import { Text3D, Center } from "@react-three/drei";
 
 interface SkyBoxProps {
   showWelcome?: boolean;
@@ -19,7 +19,7 @@ const Welcome = () => (
       bevelOffset={0}
       bevelSegments={3}
     >
-      Web Spatial Viewer 
+      Web Spatial Viewer
       <meshStandardMaterial color="#299bf8" metalness={0.5} roughness={0.5} />
     </Text3D>
     <Text3D
