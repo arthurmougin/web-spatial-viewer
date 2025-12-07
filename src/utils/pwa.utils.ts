@@ -132,7 +132,8 @@ export function proxyFyUrl(url: string): URL {
   return new URL(proxyUrl);
 }
 
-export function UnProxyFyUrl(proxyUrl: URL): URL {
+export function UnProxyFyUrl(proxyUrl: URL | string): URL {
+  proxyUrl = new URL(proxyUrl);
   const { hostname, pathname, search } = proxyUrl;
   // Ex: lofi-jingle-avp--vercel-app.localhost:3000
   const match = hostname.match(/^([^.]+)\.localhost(?::\d+)?$/);

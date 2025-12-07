@@ -9,9 +9,11 @@ import {
   RefreshCcw,
   X,
 } from "@react-three/uikit-lucide";
+import { truncate } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
+import { UnProxyFyUrl } from "../utils/pwa.utils";
 import "./RoundedPlaneGeometry";
 
 const DEFAULT_FRAME_SIZE = {
@@ -35,6 +37,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const splashScreenRef = useRef<HTMLDivElement>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const niceUrl = useRef(UnProxyFyUrl(page?.url || ""));
 
   // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
   const [frameSize, setFrameSize] = useState<FrameSize>(DEFAULT_FRAME_SIZE);
@@ -65,6 +68,13 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   // Associer le listener de la page à l'iframe
   useEffect(() => {
     page?.pageListener.setIframe(iframeRef);
+    niceUrl.current = UnProxyFyUrl(page?.url || "");
+    console.log(
+      "WebFrame: URL mise à jour pour la page",
+      id,
+      ":",
+      niceUrl.current
+    );
   }, [page]);
 
   // Gérer le manifest pour définir la taille du cadre
@@ -90,6 +100,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     return () => (timer ? clearTimeout(timer) : undefined);
   }, [page?.showSplash, showSplash]);
 
+  console.log(frameSize.width / 11.5 - 35 - 7 - 3);
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <group position={[0, 0.08 + frameSize.height / 800 / 2, 0]}>
@@ -133,7 +144,19 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
             backgroundColor={manifest?.theme_color || "#878995"}
           >
             <Text fontSize={3} marginLeft={1} color="white">
-              https://google.com
+              {
+                /**
+                 * frameSize.width / 10 = Whole parent
+                 * - 35 = remove all external buttons
+                 * - 7 = button size
+                 * - 3 = to align with radius
+                 * console.log(frameSize.width / 11.5 - 35 - 7 - 3); // ideal text lenght computation
+                 * simplified : frameSize.width / 11.5 - 45
+                 */
+                truncate(niceUrl.current.href, {
+                  length: frameSize.width / 11.4 - 45,
+                }) || "Loading..."
+              }
             </Text>
             <Button
               size="icon"
@@ -218,7 +241,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
         <iframe
           id={id.toString()}
           ref={iframeRef}
-          src={page?.url.toString()}
+          src={page?.url}
           title="Site Web"
         />
       </Html>

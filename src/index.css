@@ -110,7 +110,6 @@ iframe {
 }
 
 iframe.blurred {
-  filter: blur(2px);
   pointer-events: none;
 }
 /* #endregion */
