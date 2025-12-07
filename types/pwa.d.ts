@@ -95,7 +95,7 @@ interface WebManifest {
   // unique identifier for the web app, take the form of an url, fallback to start_url if not provided
   id?: string;
   // Full name of the web app
-  name : string;
+  name: string;
   // Allowed orientation for the web app
   orientation?:
     | "any" // No preferred orientation
@@ -126,10 +126,10 @@ interface WebManifest {
   };
 }
 
-export const defaultWebManifest : WebManifest = {
-  name: "I HAVE NOT SET A NAME FOR MY APPLICATION",
+export const defaultWebManifest: WebManifest = {
+  name: "I aM aN IdIoT wHo FoRgOt To SeT a NaMe In ThE WeB MaNiFeSt",
   display: "minimal-ui",
   background_color: "#ffffffff",
   theme_color: "#c0cdd0ff",
   start_url: "https://google.com",
-}
+};

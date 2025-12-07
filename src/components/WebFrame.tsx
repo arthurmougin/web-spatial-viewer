@@ -115,7 +115,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
                 />
               </picture>
             )}
-            <h2>{manifest?.name || "Loading..."}</h2>
+            <h2>{manifest?.name || "Fetching Manifest..."}</h2>
           </div>
         )}
         <iframe
