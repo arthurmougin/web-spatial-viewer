@@ -43,8 +43,8 @@ export class PageListener {
     if (!this.iframe) return;
 
     const messageOrigin = event.origin;
-    const iframeSrc = this.iframe.current?.getAttribute("src");
-    const iframeOrigin = new URL(iframeSrc || "").origin;
+    const iframeSrc = this.iframe.current!.getAttribute("src") as string;
+    const iframeOrigin = new URL(iframeSrc).origin;
 
     if (messageOrigin !== iframeOrigin) {
       console.warn(

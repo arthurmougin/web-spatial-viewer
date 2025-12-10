@@ -4,7 +4,7 @@ import { usePagesStore } from "./store/pages.store";
 
 function App() {
   const handlePageSubmission = usePagesStore(
-    (state) => state.handlePageSubmission
+    (state) => state.handleFirstPageSubmission
   );
   return (
     <div

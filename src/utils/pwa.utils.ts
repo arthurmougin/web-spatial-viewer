@@ -113,46 +113,6 @@ export const getLoadingIcon = (icons: WebManifestIcon[]) => {
   return sortedIcons[0]?.src || null;
 };
 
-export function proxyFyUrl(url: string): URL {
-  const { hostname, pathname, search } = new URL(url);
-  // Séparer le nom de domaine principal des sous-domaines
-  const parts = hostname.split(".");
-  const mainDomain = parts.slice(-2).join("-"); // ex: vercel-app
-  const subParts = parts.slice(0, -2); // ex: ['lofi', 'jingle', 'avp']
-
-  // Construire le sous-domaine pour le proxy
-  const proxyHostname =
-    subParts.length > 0 ? `${subParts.join("-")}--${mainDomain}` : mainDomain;
-
-  const proxyPort = 3000;
-  const isSSL = location.protocol === "https:";
-  const proxyProtocol = isSSL ? "https:" : "http:";
-  const baseProxyUrl = `${proxyProtocol}//${proxyHostname}.localhost:${proxyPort}`;
-  const proxyUrl = `${baseProxyUrl}${pathname}${search}`;
-  return new URL(proxyUrl);
-}
-
-export function UnProxyFyUrl(proxyUrl: URL | string): URL {
-  proxyUrl = new URL(proxyUrl);
-  const { hostname, pathname, search } = proxyUrl;
-  // Ex: lofi-jingle-avp--vercel-app.localhost:3000
-  const match = hostname.match(/^([^.]+)\.localhost(?::\d+)?$/);
-  if (!match) return proxyUrl;
-
-  // Sépare le nom du site du domaine principal
-  const parts = match[1].split("--");
-  if (parts.length === 1) {
-    // Cas simple : pas de séparation de domaine
-    return new URL(
-      `https://${parts[0].replace(/-/g, ".")}${pathname}${search}`
-    );
-  }
-
-  // Cas avec séparation de domaine (ex: lofi-jingle-avp--vercel-app)
-  const siteName = parts[0]; // garde les tirets pour les sous-parties du nom
-  const domain = parts[1].replace(/-/g, ".");
-  return new URL(`https://${siteName}.${domain}${pathname}${search}`);
-}
 /*
 export const handleSubmit = async (url: string) => {
   if (url) {

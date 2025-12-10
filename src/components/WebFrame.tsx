@@ -13,7 +13,7 @@ import { truncate } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
-import { UnProxyFyUrl } from "../utils/pwa.utils";
+import { UnProxyFyUrl } from "../utils/proxy.utils";
 import "./RoundedPlaneGeometry";
 
 const DEFAULT_FRAME_SIZE = {
@@ -100,7 +100,6 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     return () => (timer ? clearTimeout(timer) : undefined);
   }, [page?.showSplash, showSplash]);
 
-  console.log(frameSize.width / 11.5 - 35 - 7 - 3);
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <group position={[0, 0.08 + frameSize.height / 800 / 2, 0]}>
@@ -235,7 +234,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
                 />
               </picture>
             )}
-            <h2>{manifest?.name || "Fetching Manifest..."}</h2>
+            <h2>{manifest?.name || "Loading..."}</h2>
           </div>
         )}
         <iframe
