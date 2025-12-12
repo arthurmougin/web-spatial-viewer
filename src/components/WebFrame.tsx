@@ -11,10 +11,12 @@ import {
 } from "@react-three/uikit-lucide";
 import { truncate } from "lodash";
 import { useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
 import { UnProxyFyUrl } from "../utils/proxy.utils";
 import "./RoundedPlaneGeometry";
+import { Progress } from "./ui/progress";
 
 const DEFAULT_FRAME_SIZE = {
   width: 1280,
@@ -32,7 +34,14 @@ interface WebFrameProps {
 }
 
 export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
-  const page = usePagesStore((state) => state.getPage(id));
+  const [page, progressData] = usePagesStore(
+    useShallow((state) => {
+      const p = state.getPage(id);
+      return [p, p?.progressData || null];
+    })
+  );
+  const [progress, setProgress] = useState<number>(0);
+
   const manifest = usePWAStore((state) => state.manifest);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const splashScreenRef = useRef<HTMLDivElement>(null);
@@ -75,7 +84,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
       ":",
       niceUrl.current
     );
-  }, [page]);
+  }, [page, id]);
 
   // Gérer le manifest pour définir la taille du cadre
   useEffect(() => {
@@ -100,6 +109,14 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     return () => (timer ? clearTimeout(timer) : undefined);
   }, [page?.showSplash, showSplash]);
 
+  // Gérer la progression du chargement
+  useEffect(() => {
+    if (progressData) {
+      setProgress(progressData.progress);
+    }
+  }, [progressData]);
+
+  console.log(`Rendering WebFrame for page ID: ${id}`, progressData);
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <group position={[0, 0.08 + frameSize.height / 800 / 2, 0]}>
@@ -212,7 +229,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           />
         }
       >
-        {showSplash && (
+        {true && ( //showSplash
           <div
             className="splash-screen"
             ref={splashScreenRef}
@@ -235,6 +252,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
               </picture>
             )}
             <h2>{manifest?.name || "Loading..."}</h2>
+            <Progress value={progress} className="w-[60%]" />
           </div>
         )}
         <iframe

@@ -1,11 +1,15 @@
 import { create } from "zustand";
 import { PageListener } from "../classes/page-listener";
-import { ProgressListener } from "../classes/progress-listener";
+import {
+  ProgressListener,
+  type ProgressData,
+} from "../classes/progress-listener";
 import { proxyFyUrl } from "../utils/proxy.utils";
 
 export interface Page {
   id: number;
   pageListener: PageListener;
+  progressData: ProgressData | null;
   progressListener: ProgressListener | null;
   url: string;
   showSplash: boolean;
@@ -20,6 +24,7 @@ interface PagesState {
   updatePage(id: number, data: Partial<Page>): void;
   getPageByUrl: (url: string) => Page | undefined;
   clearProgressListener(pageId: number): void;
+  updateProgressData(pageId: number, data: ProgressData): void;
 }
 
 export const usePagesStore = create<PagesState>((set) => ({
@@ -96,6 +101,12 @@ export const usePagesStore = create<PagesState>((set) => ({
     set((state) => ({
       pages: state.pages.map((page) =>
         page.id === pageId ? { ...page, progressListener: null } : page
+      ),
+    })),
+  updateProgressData: (pageId: number, data: ProgressData) =>
+    set((state) => ({
+      pages: state.pages.map((page) =>
+        page.id === pageId ? { ...page, progressData: data } : page
       ),
     })),
 }));

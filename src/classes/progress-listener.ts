@@ -1,6 +1,6 @@
-import { usePagesStore } from "../store/pages.store";
+import { usePagesStore } from "@/store/pages.store";
 
-interface ProgressData {
+export interface ProgressData {
   step: string;
   progress: number;
   message: string;
@@ -37,6 +37,8 @@ export class ProgressListener {
           `[ViewerProgress-${this.pageId}] ${data.progress}% - ${data.step}: ${data.message}`
         );
 
+        usePagesStore.getState().updateProgressData(this.pageId, data);
+
         // Si le traitement est terminé, on peut fermer la connexion
         if (data.progress === 100 && data.step.includes("COMPLETE")) {
           this.dispose();
@@ -64,7 +66,6 @@ export class ProgressListener {
       console.log(`[ProgressListener-${this.pageId}] Closing connection.`);
       this.eventSource.close();
       this.eventSource = null;
-      usePagesStore.getState().clearProgressListener(this.pageId);
     }
   }
 }
