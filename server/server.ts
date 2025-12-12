@@ -262,41 +262,12 @@ app.get("*path", async (req: Request, res: Response, next) => {
       `<script src="${jsFileUrl}" type="module"></script></head>`
     );
 
-    /** replace any url in html with proxyFyUrl */
-    const urlRegex =
-      /(<meta[^>]+content=["'])(https?:\/\/[^"']+)(["'][^>]*>)/gi;
-    html = html.replace(urlRegex, (match, p1, p2, p3) => {
-      console.log(chalk.gray(`  > Replacing URL in meta tag: ${p2}`));
-      const proxiedUrl = proxyFyUrl(p2).toString();
-      return `${p1}${proxiedUrl}${p3}`;
-    });
-
-    // Regex pour les attributs src, href, action
-    const commonAttributesRegex =
-      /\s(href|src|action)=["'](https?:\/\/[^"']+)["']/gi;
-    html = html.replace(commonAttributesRegex, (match, attr, url) => {
-      console.log(chalk.gray(`  > Replacing URL in ${attr}: ${url}`));
+    /** replace any occurance of target url domain in url and  in html with proxyFyUrl */
+    const urlRegex = /["'\s=](https?:\/\/[^"'\s&]+)["'\s&]?/g;
+    html = html.replace(urlRegex, (match, url) => {
+      console.log(chalk.gray(`  > Replacing URL: ${url}`));
       const proxiedUrl = proxyFyUrl(url).toString();
-      return ` ${attr}="${proxiedUrl}"`;
-    });
-
-    // Regex pour l'attribut srcset (images responsives)
-    const srcsetRegex = /\s(srcset)=["']([^"']+)["']/gi;
-    html = html.replace(srcsetRegex, (match, attr, srcset) => {
-      console.log(chalk.gray(`  > Replacing URLs in srcset...`));
-      const newSrcset = srcset
-        .split(",")
-        .map((part: string) => {
-          const trimmedPart = part.trim();
-          const [url, descriptor] = trimmedPart.split(/\s+/);
-          if (url.startsWith("http://") || url.startsWith("https://")) {
-            const proxiedUrl = proxyFyUrl(url).toString();
-            return `${proxiedUrl} ${descriptor || ""}`.trim();
-          }
-          return trimmedPart; // Ne modifie pas les URLs relatives
-        })
-        .join(", ");
-      return ` ${attr}="${newSrcset}"`;
+      return `"${proxiedUrl}"`;
     });
 
     if (pageId) {

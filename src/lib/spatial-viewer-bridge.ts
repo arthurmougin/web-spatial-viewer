@@ -17,10 +17,13 @@ export class SpatialViewerBridge {
   private static instance: SpatialViewerBridge;
   private id: string | null = null;
 
+  private backLog: Omit<IBridgeMessage, "id">[] = [];
+
   private constructor() {
     console.log("bonjour from SpatialViewerBridge", window);
     window.onmessage = this.receiveMessage.bind(this);
     this.initialConversation();
+    this.pageLoadListening();
   }
 
   public static getInstance(): SpatialViewerBridge {
@@ -59,8 +62,11 @@ export class SpatialViewerBridge {
   }
 
   public sendToViewer(data: Omit<IBridgeMessage, "id">): void {
+    // We can't send events without an ID, so we backlog them until we get one
     if (this.id != null) {
       (data as IBridgeMessage).id = this.id;
+    } else if (data.type !== "INIT") {
+      this.backLog.push(data);
     }
     window.top!.postMessage({ ...data }, "*");
   }
@@ -76,6 +82,13 @@ export class SpatialViewerBridge {
       const data = event.data as IBridgeIDAttributionData;
       this.id = data.data.id;
       console.log("ID_ATTRIBUTION received, assigned id:", this.id);
+
+      //Send backlog messages
+      this.backLog.forEach((message) => {
+        this.sendToViewer(message);
+      });
+      this.backLog = [];
+
       return;
     }
 
@@ -94,6 +107,13 @@ export class SpatialViewerBridge {
     }
 
     // Handle other messages
+  }
+
+  private pageLoadListening() {
+    window.addEventListener("readystatechange", console.log);
+    document.addEventListener("DOMContentLoaded", console.log);
+    document.addEventListener("progress", console.log);
+    document.addEventListener("stalled", console.log);
   }
 }
 

@@ -9,7 +9,6 @@ import {
   RefreshCcw,
   X,
 } from "@react-three/uikit-lucide";
-import { truncate } from "lodash";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { usePagesStore } from "../store/pages.store";
@@ -35,18 +34,18 @@ interface WebFrameProps {
 
 export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   const [page, progressData] = usePagesStore(
-    useShallow((state) => {
-      const p = state.getPage(id);
-      return [p, p?.progressData || null];
-    })
+    useShallow((state) => [
+      state.getPage(id),
+      state.getPage(id)?.progressData || null,
+    ])
   );
   const [progress, setProgress] = useState<number>(0);
 
   const manifest = usePWAStore((state) => state.manifest);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const splashScreenRef = useRef<HTMLDivElement>(null);
-  const [showSplash, setShowSplash] = useState(true);
-  const niceUrl = useRef(UnProxyFyUrl(page?.url || ""));
+  const [localShowSplash, setLocalShowSplash] = useState(true);
+  const niceUrl = useRef(page?.url ? UnProxyFyUrl(page?.url) : null);
 
   // Calcule les dimensions finales en utilisant les valeurs par défaut si nécessaire
   const [frameSize, setFrameSize] = useState<FrameSize>(DEFAULT_FRAME_SIZE);
@@ -78,16 +77,11 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   useEffect(() => {
     page?.pageListener.setIframe(iframeRef);
     niceUrl.current = UnProxyFyUrl(page?.url || "");
-    console.log(
-      "WebFrame: URL mise à jour pour la page",
-      id,
-      ":",
-      niceUrl.current
-    );
   }, [page, id]);
 
   // Gérer le manifest pour définir la taille du cadre
   useEffect(() => {
+    console.log("manifest changed:", manifest);
     if (
       manifest &&
       manifest.xr_main_scene &&
@@ -100,14 +94,15 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
   // Gérer l'affichage de l'écran de démarrage
   useEffect(() => {
     let timer = null;
-    if (!page?.showSplash && showSplash) {
+    if (!page?.showSplash && localShowSplash) {
       splashScreenRef.current?.classList.add("hidden");
       timer = setTimeout(() => {
-        setShowSplash(false);
+        setLocalShowSplash(false);
       }, 1000);
     }
     return () => (timer ? clearTimeout(timer) : undefined);
-  }, [page?.showSplash, showSplash]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page?.showSplash]);
 
   // Gérer la progression du chargement
   useEffect(() => {
@@ -116,7 +111,6 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
     }
   }, [progressData]);
 
-  console.log(`Rendering WebFrame for page ID: ${id}`, progressData);
   return (
     <group position={position} rotation={[0, Math.PI, 0]}>
       <group position={[0, 0.08 + frameSize.height / 800 / 2, 0]}>
@@ -160,19 +154,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
             backgroundColor={manifest?.theme_color || "#878995"}
           >
             <Text fontSize={3} marginLeft={1} color="white">
-              {
-                /**
-                 * frameSize.width / 10 = Whole parent
-                 * - 35 = remove all external buttons
-                 * - 7 = button size
-                 * - 3 = to align with radius
-                 * console.log(frameSize.width / 11.5 - 35 - 7 - 3); // ideal text lenght computation
-                 * simplified : frameSize.width / 11.5 - 45
-                 */
-                truncate(niceUrl.current.href, {
-                  length: frameSize.width / 11.4 - 45,
-                }) || "Loading..."
-              }
+              {niceUrl.current?.href || "Loading..."}
             </Text>
             <Button
               size="icon"
@@ -229,7 +211,7 @@ export function WebFrame({ id, position = [5, 0, 0] }: WebFrameProps) {
           />
         }
       >
-        {true && ( //showSplash
+        {localShowSplash && (
           <div
             className="splash-screen"
             ref={splashScreenRef}

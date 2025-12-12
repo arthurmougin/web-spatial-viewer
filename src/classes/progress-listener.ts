@@ -24,18 +24,9 @@ export class ProgressListener {
     const url = `http://localhost:3000/events/${this.pageId}`;
     this.eventSource = new EventSource(url);
 
-    this.eventSource.onopen = () => {
-      console.log(
-        `[ProgressListener-${this.pageId}] Connection opened to server.`
-      );
-    };
-
     this.eventSource.onmessage = (event) => {
       try {
         const data: ProgressData = JSON.parse(event.data);
-        console.log(
-          `[ViewerProgress-${this.pageId}] ${data.progress}% - ${data.step}: ${data.message}`
-        );
 
         usePagesStore.getState().updateProgressData(this.pageId, data);
 
@@ -48,6 +39,8 @@ export class ProgressListener {
           `[ProgressListener-${this.pageId}] Error parsing message:`,
           error
         );
+
+        usePagesStore.getState().updatePage(this.pageId, { showSplash: false });
       }
     };
 
@@ -63,7 +56,6 @@ export class ProgressListener {
 
   public dispose() {
     if (this.eventSource) {
-      console.log(`[ProgressListener-${this.pageId}] Closing connection.`);
       this.eventSource.close();
       this.eventSource = null;
     }

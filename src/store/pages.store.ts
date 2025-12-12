@@ -42,6 +42,13 @@ export const usePagesStore = create<PagesState>((set) => ({
 
       const id = Date.now();
       const proxiedUrl = proxyFyUrl(url, id);
+      if (!proxiedUrl) {
+        console.error(
+          "Invalid URL provided to handleFirstPageSubmission:",
+          url
+        );
+        return {};
+      }
       return {
         pages: [
           {
@@ -59,6 +66,10 @@ export const usePagesStore = create<PagesState>((set) => ({
     set((state) => {
       const id = Date.now();
       const proxiedUrl = proxyFyUrl(url, id);
+      if (!proxiedUrl) {
+        console.error("Invalid URL provided to addPage:", url);
+        return {};
+      }
       return {
         pages: [
           ...state.pages,
@@ -77,11 +88,14 @@ export const usePagesStore = create<PagesState>((set) => ({
     return state.pages.find((page: Page) => page.id === id);
   },
   updatePage: (id: number, data: Partial<Page>) =>
-    set((state) => ({
-      pages: state.pages.map((page) =>
-        page.id === id ? { ...page, ...data } : page
-      ),
-    })),
+    set((state) => {
+      console.log("Updating page", id, data);
+      return {
+        pages: state.pages.map((page) =>
+          page.id === id ? { ...page, ...data } : page
+        ),
+      };
+    }),
   getPageByUrl: (url: string): Page | undefined => {
     const state = usePagesStore.getState();
     return state.pages.find((page: Page) => page.url === url);

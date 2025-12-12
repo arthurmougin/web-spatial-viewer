@@ -1,4 +1,5 @@
-export function proxyFyUrl(url: string, pageId?: number): URL {
+export function proxyFyUrl(url: string, pageId?: number): URL | null {
+  if (!url) return null;
   const currentUrl = new URL(url);
   // Séparer le nom de domaine principal des sous-domaines
   const parts = currentUrl.hostname.split(".");
@@ -27,8 +28,9 @@ export function proxyFyUrl(url: string, pageId?: number): URL {
   return new URL(proxyUrl);
 }
 
-export function UnProxyFyUrl(proxyUrl: URL | string): URL {
-  if (!proxyUrl) throw new Error("URL invalide :" + proxyUrl);
+export function UnProxyFyUrl(proxyUrl: URL | string): URL | null {
+  if (!proxyUrl) return null;
+  if (proxyUrl === "") return null;
   if (typeof proxyUrl === "string") proxyUrl = new URL(proxyUrl);
   const { hostname, pathname, search } = proxyUrl;
   // Ex: lofi-jingle-avp--vercel-app.localhost:3000

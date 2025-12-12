@@ -39,7 +39,6 @@ export class PageListener {
   }
 
   parseMessage(event: MessageEvent) {
-    console.log("Message received in PageListener:", event);
     if (!this.iframe) return;
 
     const messageOrigin = event.origin;
@@ -68,8 +67,6 @@ export class PageListener {
         //We don't care for other pages
         return;
       }
-      console.log("INIT message received with data:", event.data);
-
       const data = (event.data as IBridgeInitData).data;
 
       usePWAStore.getState().setSpatialSDKSignature(data.sdkSignature);
