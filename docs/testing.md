@@ -40,13 +40,15 @@ src/
 ## Périmètre de couverture
 
 ### ✅ Inclus (testable via happy-dom)
-- **`src/utils/**`** — Transformation d'URLs, parsing de manifestes PWA
-- **`src/store/**`** — Gestion de l'historique de navigation (Zustand)
-- **`src/classes/**`** — PageListener/ProgressListener (avec mocks pour I/O)
+
+- **`src/utils/**`\*\* — Transformation d'URLs, parsing de manifestes PWA
+- **`src/store/**`\*\* — Gestion de l'historique de navigation (Zustand)
+- **`src/classes/**`\*\* — PageListener/ProgressListener (avec mocks pour I/O)
 
 ### ❌ Exclus (nécessite GPU/WebGL)
-- **`src/components/**`** — Composants R3F/uikit (NavBar3D, WebFrame, Scene3D)
-- **`src/lib/**`** — Bridge script (injecté dans l'iframe, pas de logique DOM testable)
+
+- **`src/components/**`\*\* — Composants R3F/uikit (NavBar3D, WebFrame, Scene3D)
+- **`src/lib/**`\*\* — Bridge script (injecté dans l'iframe, pas de logique DOM testable)
 
 **Raison de l'exclusion :** Les composants React Three Fiber et @react-three/uikit nécessitent un contexte Canvas WebGL avec GPU. happy-dom/jsdom fournissent les APIs DOM (window, URL, fetch) mais **pas WebGL**. Pour tester ces composants, il faudrait utiliser Playwright ou Cypress avec un vrai navigateur.
 
@@ -55,14 +57,22 @@ src/
 ## Stratégies de mocking
 
 ### 1. Mocking de `fetch` (pwa.utils.test.ts)
+
 ```typescript
-vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-  ok: true,
-  json: () => Promise.resolve({ /* mock manifest */ }),
-}));
+vi.stubGlobal(
+  "fetch",
+  vi.fn().mockResolvedValue({
+    ok: true,
+    json: () =>
+      Promise.resolve({
+        /* mock manifest */
+      }),
+  }),
+);
 ```
 
 ### 2. Mocking de `window.location` (proxy.utils.test.ts)
+
 ```typescript
 vi.stubGlobal("location", {
   protocol: "https:",
@@ -71,6 +81,7 @@ vi.stubGlobal("location", {
 ```
 
 ### 3. Mocking de classes avec effets de bord (pages.store.test.ts)
+
 ```typescript
 vi.mock("../../classes/page-listener", () => ({
   PageListener: vi.fn().mockImplementation(() => ({
@@ -99,6 +110,7 @@ Tous les tests passent. Les messages stderr visibles dans la sortie console (ex 
 ## Limitations connues
 
 ### proxy.utils.test.ts — Domaines de base avec tirets
+
 ```typescript
 // LIMITATION CONNUE : les domaines contenant des tirets ne peuvent pas faire un roundtrip correct
 proxyFyUrl("https://my-app.com") → "my-app-com.localhost:3000"
@@ -106,6 +118,7 @@ UnProxyFyUrl("my-app-com.localhost:3000") → "https://my.app.com" // ❌ incorr
 ```
 
 **Cause :** Le pattern de proxy utilise les tirets à la fois comme :
+
 - Séparateur de sous-domaines (`www--google-com`)
 - Remplacement des points dans les noms de domaine (`google-com`)
 
@@ -155,6 +168,7 @@ expect(useMonStore.getState().items).toHaveLength(2);
 ## Tests d'intégration (futur)
 
 Pour tester les composants R3F/uikit et les interactions utilisateur :
+
 - **Option 1 :** Playwright (contrôle un vrai navigateur Chrome/Firefox)
 - **Option 2 :** Cypress (tests E2E avec DOM réel)
 - **Option 3 :** Storybook + Chromatic (tests visuels de composants)

@@ -8,9 +8,9 @@
  * recordNavigation and assert the resulting history/historyIndex.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { PageListener } from "../../classes/page-listener";
 import type { Page } from "../../store/pages.store";
 import { usePagesStore } from "../../store/pages.store";
-import type { PageListener } from "../../classes/page-listener";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 
@@ -27,7 +27,6 @@ vi.mock("../../classes/progress-listener", () => ({
     dispose: vi.fn(),
   })),
 }));
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
