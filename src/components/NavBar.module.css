@@ -1,0 +1,119 @@
+.bar {
+  width: 100%;
+  height: 44px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  border-radius: 9999px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  /* glassmorphism */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.35);
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.iconBtn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.iconBtn:active {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.iconBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.urlBar {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border-radius: 9999px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  position: relative;
+  /* URL bar glassmorphism */
+  background: rgba(101, 99, 92, 0.6);
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  box-shadow: inset 0 3px 4px rgba(52, 50, 50, 0.35);
+}
+
+.urlContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.urlIcon {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.urlText {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.urlActionBtn {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  backdrop-filter: blur(50px);
+  -webkit-backdrop-filter: blur(50px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.urlActionBtn:hover {
+  color: #ffffff;
+}

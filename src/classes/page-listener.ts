@@ -1,8 +1,9 @@
 import { type RefObject } from "react";
 import {
-  BridgeMessageType,
-  type IBridgeInitData,
-  type IBridgeMessage,
+    BridgeMessageType,
+    type IBridgeInitData,
+    type IBridgeMessage,
+    type IBridgeNavigateData,
 } from "../../types/bridge";
 import { usePagesStore } from "../store/pages.store";
 import { usePWAStore } from "../store/pwa.store";
@@ -11,15 +12,17 @@ export class PageListener {
   id: number;
   url: string;
   iframe: RefObject<HTMLIFrameElement> | null = null;
-  //receivedMessageCallbacks: ((message: IBridgeMessage) => void)[] = [];
+  private boundParseMessage: (event: MessageEvent) => void;
+
   constructor(url: string, id: number) {
     this.url = url;
     this.id = id;
-    window.addEventListener("message", this.parseMessage.bind(this));
+    this.boundParseMessage = this.parseMessage.bind(this);
+    window.addEventListener("message", this.boundParseMessage);
   }
 
   dispose() {
-    window.removeEventListener("message", this.parseMessage.bind(this));
+    window.removeEventListener("message", this.boundParseMessage);
   }
 
   setIframe(iframe: RefObject<HTMLIFrameElement | null>) {
@@ -47,7 +50,7 @@ export class PageListener {
 
     if (messageOrigin !== iframeOrigin) {
       console.warn(
-        `Origin mismatch: message origin (${messageOrigin}) does not match iframe origin (${iframeOrigin}). Message ignored.`
+        `Origin mismatch: message origin (${messageOrigin}) does not match iframe origin (${iframeOrigin}). Message ignored.`,
       );
       return;
     }
@@ -96,6 +99,13 @@ export class PageListener {
       case "NETWORK_IDLE": {
         console.log("NETWORK_IDLE message received", event.data);
         usePagesStore.getState().updatePage(this.id, { showSplash: false });
+        break;
+      }
+      case "NAVIGATE": {
+        const nav = event.data as IBridgeNavigateData;
+        usePagesStore
+          .getState()
+          .recordNavigation(this.id, nav.data.url, nav.data.action);
         break;
       }
       default:

@@ -1,24 +1,25 @@
-import { defineConfig } from "vite";
 import { resolve } from "path";
+import { defineConfig } from "vite";
 
+// Bridge-only watch build.
+// Outputs dist/lib/spatial-viewer-bridge.js — same filename expected by server.ts.
+// Usage: npm run lib:watch
 export default defineConfig({
   build: {
-    lib: {
-      entry: resolve(__dirname, "src/lib/spatial-viewer-bridge.ts"),
-      name: "SpatialViewerBridge",
-      fileName: (format) => `spatial-viewer-bridge.${format}.js`,
-    },
     rollupOptions: {
-      external: ["react", "react-dom"],
+      input: {
+        "spatial-viewer-bridge": resolve(
+          __dirname,
+          "src/lib/spatial-viewer-bridge.ts",
+        ),
+      },
       output: {
-        globals: {
-          react: "React",
-          "react-dom": "ReactDOM",
-        },
+        entryFileNames: "lib/[name].js",
+        format: "es",
       },
     },
-    outDir: "dist/lib",
-    // Ne pas vider le dossier dist principal
+    outDir: "dist",
     emptyOutDir: false,
+    minify: false,
   },
 });

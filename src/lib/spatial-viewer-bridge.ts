@@ -1,9 +1,10 @@
 import type {
-  BridgeMessageType,
-  IBridgeIDAttributionData,
-  IBridgeInitData,
-  IBridgeMessage,
-  WebSpatialSDKSignature,
+    BridgeMessageType,
+    IBridgeIDAttributionData,
+    IBridgeInitData,
+    IBridgeMessage,
+    IBridgeNavigateData,
+    WebSpatialSDKSignature,
 } from "../../types/bridge";
 
 declare global {
@@ -15,7 +16,7 @@ declare global {
 
 export class SpatialViewerBridge {
   private static instance: SpatialViewerBridge;
-  private id: string | null = null;
+  private id: number | null = null;
 
   private backLog: Omit<IBridgeMessage, "id">[] = [];
 
@@ -23,6 +24,7 @@ export class SpatialViewerBridge {
     console.log("bonjour from SpatialViewerBridge", window);
     window.onmessage = this.receiveMessage.bind(this);
     this.initialConversation();
+    this.interceptNavigation();
     this.pageLoadListening();
   }
 
@@ -35,7 +37,7 @@ export class SpatialViewerBridge {
 
   private initialConversation() {
     const nextLink = document.querySelector(
-      'link[rel="manifest"]'
+      'link[rel="manifest"]',
     ) as HTMLLinkElement;
     const manifestUrl = nextLink ? nextLink.href : null;
     const sdkSignature = window.__webspatialsdk__ || null;
@@ -97,7 +99,7 @@ export class SpatialViewerBridge {
     if (this.id == null) {
       console.warn(
         "Received message before ID_ATTRIBUTION. Message ignored.",
-        event.data
+        event.data,
       );
       return;
     }
@@ -107,13 +109,60 @@ export class SpatialViewerBridge {
     }
 
     // Handle other messages
+    if (event.data.type === "GO_BACK") {
+      history.back();
+      return;
+    }
+    if (event.data.type === "GO_FORWARD") {
+      history.forward();
+      return;
+    }
+  }
+
+  private interceptNavigation() {
+    // Intercept history.pushState
+    const originalPushState = history.pushState.bind(history);
+    history.pushState = (
+      state: unknown,
+      title: string,
+      url?: string | URL | null,
+    ) => {
+      originalPushState(state, title, url);
+      const navigateMessage: Omit<IBridgeNavigateData, "id"> = {
+        type: "NAVIGATE" as BridgeMessageType.NAVIGATE,
+        data: { url: window.location.href, action: "push" },
+      };
+      this.sendToViewer(navigateMessage);
+    };
+
+    // Intercept history.replaceState
+    const originalReplaceState = history.replaceState.bind(history);
+    history.replaceState = (
+      state: unknown,
+      title: string,
+      url?: string | URL | null,
+    ) => {
+      originalReplaceState(state, title, url);
+      const navigateMessage: Omit<IBridgeNavigateData, "id"> = {
+        type: "NAVIGATE" as BridgeMessageType.NAVIGATE,
+        data: { url: window.location.href, action: "replace" },
+      };
+      this.sendToViewer(navigateMessage);
+    };
+
+    // Intercept browser back/forward (popstate)
+    window.addEventListener("popstate", () => {
+      const navigateMessage: Omit<IBridgeNavigateData, "id"> = {
+        type: "NAVIGATE" as BridgeMessageType.NAVIGATE,
+        data: { url: window.location.href, action: "pop" },
+      };
+      this.sendToViewer(navigateMessage);
+    });
   }
 
   private pageLoadListening() {
-    window.addEventListener("readystatechange", console.log);
-    document.addEventListener("DOMContentLoaded", console.log);
-    document.addEventListener("progress", console.log);
-    document.addEventListener("stalled", console.log);
+    // Placeholder for future page lifecycle forwarding (LOG, ERROR, NAVIGATE).
+    // Nothing is sent to the viewer yet.
   }
 }
 
