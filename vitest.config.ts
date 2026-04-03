@@ -5,25 +5,18 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [react()],
   test: {
-    // Use happy-dom — lighter than jsdom, covers URL / fetch / window APIs.
-    // Note: WebGL / R3F / uikit components are NOT testable here (no GPU).
-    // Those require a real browser or playwright.
     environment: "happy-dom",
-
-    // Make describe / it / expect available globally (no explicit imports needed)
     globals: true,
-
-    // Global setup: jest-dom matchers
     setupFiles: ["./src/test/setup.ts"],
-
-    // Only collect coverage for pure-logic modules, not 3D/R3F components
+    include: ["src/**/*.test.{ts,tsx}", "server/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/utils/**", "src/store/**", "src/classes/**"],
+      include: ["src/utils/**", "src/store/**", "src/classes/**", "server/**"],
       exclude: [
         "src/components/**",
-        "src/lib/**", // bridge script has no DOM-testable logic
+        "src/lib/**",
         "src/**/*.d.ts",
+        "server/**/*.d.ts",
       ],
       reporter: ["text", "lcov", "html"],
     },

@@ -11,8 +11,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@radix-ui/react-progress": "^1.1.8",
@@ -44,6 +47,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@playwright/test": "latest",
+    "@react-three/test-renderer": "latest",
     "@types/express": "^5.0.3",
     "@types/lodash": "^4.17.21",
     "@types/node": "^24.10.3",
