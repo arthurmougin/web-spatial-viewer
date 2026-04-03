@@ -1,296 +1,368 @@
 import chalk from "chalk";
-import express, { Request, Response } from "express";
+import express, { Request, Response, type Express } from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = 47891;
+export const DEFAULT_PORT = 47891;
+const DEFAULT_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const BRIDGE_FILE_URL = "/lib/spatial-viewer-bridge.js";
 
-// --- Infrastructure pour les Server-Sent Events (SSE) ---
-const sseClients = new Map<string, Response>();
+interface ResponseBodyLike {
+  pipe(destination: Response): void;
+}
 
-interface ProgressData {
+interface FetchResponseLike {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: {
+    get(name: string): string | null;
+  };
+  body: ResponseBodyLike | null;
+  text(): Promise<string>;
+}
+
+type FetchLike = (
+  url: string,
+  init?: {
+    headers?: Record<string, string>;
+  },
+) => Promise<FetchResponseLike>;
+
+export interface ProgressData {
   step: string;
   progress: number;
   message: string;
   duration?: number;
 }
 
-function sendProgress(pageId: string, data: ProgressData) {
-  const client = sseClients.get(pageId);
-  if (client) {
-    client.write(`data: ${JSON.stringify(data)}\n\n`);
-  }
+async function loadDefaultFetch(): Promise<FetchLike> {
+  return (await import("node-fetch")).default as unknown as FetchLike;
 }
 
-app.get("/events/:pageId", (req: Request, res: Response) => {
-  const { pageId } = req.params;
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-    "Access-Control-Allow-Origin": "*", // Ajout du header CORS
-  });
-  res.write("\n"); // Envoi initial pour ouvrir la connexion
+function createProgressSender(sseClients: Map<string, Response>) {
+  return (pageId: string, data: ProgressData) => {
+    const client = sseClients.get(pageId);
+    if (client) {
+      client.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  };
+}
 
-  sseClients.set(pageId, res);
-  console.log(chalk.cyan(`[SSE] Client connected for pageId: ${pageId}`));
+function getRequestSearchParams(req: Request): URLSearchParams {
+  const url = new URL(req.originalUrl, "http://localhost");
+  return url.searchParams;
+}
 
-  req.on("close", () => {
-    sseClients.delete(pageId);
-    console.log(chalk.cyan(`[SSE] Client disconnected for pageId: ${pageId}`));
-  });
-});
-// --- Fin de l'infrastructure SSE ---
+export function getRequestTargetPath(req: Request): string {
+  const searchParams = getRequestSearchParams(req);
+  searchParams.delete("pageId");
+  const search = searchParams.toString();
+  return `${req.path}${search ? `?${search}` : ""}`;
+}
 
-// Utilitaire pour reconstruire l'URL cible à partir du sous-domaine
-function getTargetUrlFromHost(host: string, path: string): string | null {
-  console.log(chalk.blue(`[Proxy] Resolving host: ${host}${path}`));
-  // Ex: lofi-jingle-avp--vercel-app.localhost:47891 => lofi-jingle-avp.vercel.app
+export function getTargetUrlFromHost(
+  host: string,
+  requestPath: string,
+): string | null {
+  console.log(chalk.blue(`[Proxy] Resolving host: ${host}${requestPath}`));
   const match = host.match(/^([^.]+)\.localhost(?::\d+)?$/);
   if (!match) {
     console.log(chalk.red(`[Proxy] Invalid host format: ${host}`));
     return null;
   }
+  if (!match) {
+    console.log(chalk.red(`[Proxy] Invalid host format: ${host}`));
+    return null;
+  }
 
-  // Sépare le nom du site du domaine principal
   const parts = match[1].split("--");
   if (parts.length === 1) {
-    // Cas simple : pas de séparation de domaine
-    const targetUrl = `https://${parts[0].replace(/-/g, ".")}${path}`;
+    const targetUrl = `https://${parts[0].replace(/-/g, ".")}${requestPath}`;
     console.log(chalk.green(`[Proxy] Resolved to target URL: ${targetUrl}`));
     return targetUrl;
   }
 
-  // Cas avec séparation de domaine (ex: lofi-jingle-avp--vercel-app)
-  const siteName = parts[0]; // garde les tirets pour les sous-parties du nom
+  const siteName = parts[0];
   const domain = parts[1].replace(/-/g, ".");
-  const targetUrl = `https://${siteName}.${domain}${path}`;
+  const targetUrl = `https://${siteName}.${domain}${requestPath}`;
   console.log(chalk.green(`[Proxy] Resolved to target URL: ${targetUrl}`));
   return targetUrl;
 }
 
-export function proxyFyUrl(url: string): URL {
+export function proxyFyUrl(url: string, port = DEFAULT_PORT): URL {
   console.log(chalk.cyan(`[Proxyfy URL] Original: ${url}`));
   const urlToProxify = new URL(url);
-  // Séparer le nom de domaine principal des sous-domaines
   const parts = urlToProxify.hostname.split(".");
-  const mainDomain = parts.slice(-2).join("-"); // ex: vercel-app
-  const subParts = parts.slice(0, -2); // ex: ['lofi', 'jingle', 'avp']
+  const mainDomain = parts.slice(-2).join("-");
+  const subParts = parts.slice(0, -2);
 
-  // Construire le sous-domaine pour le proxy
   const proxyHostname =
     subParts.length > 0 ? `${subParts.join("-")}--${mainDomain}` : mainDomain;
 
-  const proxyPort = 47891;
-  //is the server in prod environment?
-
   const isServerInProduction = process.env.NODE_ENV === "production";
   const proxyProtocol = isServerInProduction ? "https:" : "http:";
-  const baseProxyUrl = `${proxyProtocol}//${proxyHostname}.localhost:${proxyPort}`;
+  const baseProxyUrl = `${proxyProtocol}//${proxyHostname}.localhost:${port}`;
   const proxyUrl = `${baseProxyUrl}${urlToProxify.pathname}${urlToProxify.search}`;
   console.log(chalk.cyan(`[Proxyfy URL] Proxied: ${proxyUrl}`));
   return new URL(proxyUrl);
 }
 
-// Servir le JS généré
-app.use("/lib", express.static(path.join(__dirname, "../dist/lib")));
-
-// Fonction de proxy pour les ressources
-async function proxyResource(req: Request, res: Response) {
-  const host = req.headers.host || "";
-  const pageId = req.query.pageId as string | undefined;
-
-  if (pageId) {
-    sendProgress(pageId, {
-      step: "RESOURCE_START",
-      progress: 0,
-      message: `Proxying resource: ${req.path}`,
-    });
-  }
-
-  console.log(chalk.yellow(`\n[Proxy Resource] Request for: ${req.path}`));
-  const targetUrl = getTargetUrlFromHost(host, req.path);
-  if (!targetUrl) return res.status(400).send("Invalid host format");
-
-  try {
-    const fetch = (await import("node-fetch")).default;
-    const headers = {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      // Transférer les en-têtes importants
-      "accept-language": req.headers["accept-language"] || "",
-      accept: req.headers.accept || "*/*",
-    };
-    console.log(chalk.gray(`  > Fetching: ${targetUrl}`));
-    if (pageId) {
-      sendProgress(pageId, {
-        step: "RESOURCE_FETCHING",
-        progress: 50,
-        message: `Fetching: ${targetUrl}`,
-      });
-    }
-    const startTime = Date.now();
-    const response = await fetch(targetUrl, {
-      headers,
-    });
-    const duration = Date.now() - startTime;
-    console.log(
-      chalk.green(`  < Fetched in ${duration}ms. Status: ${response.status}`)
-    );
-    if (pageId) {
-      sendProgress(pageId, {
-        step: "RESOURCE_FETCHED",
-        progress: 100,
-        message: `Fetched in ${duration}ms. Status: ${response.status}`,
-        duration,
-      });
-    }
-
-    if (!response.ok) {
-      console.log(chalk.red(`  ! Error: ${response.statusText}`));
-      return res.status(response.status).send(response.statusText);
-    }
-
-    if (response.body) {
-      const contentType =
-        response.headers.get("content-type") || "application/octet-stream";
-      console.log(chalk.gray(`  > Content-Type: ${contentType}`));
-      res.set("Content-Type", contentType);
-      res.set("Access-Control-Allow-Origin", "*");
-      res.set("Access-Control-Allow-Headers", "*");
-      response.body.pipe(res);
-    } else {
-      console.log(chalk.gray("  > No content in response."));
-      res.status(204).send(); // No Content
-    }
-  } catch (error) {
-    console.error(
-      chalk.red("[Proxy Resource] Error fetching resource:"),
-      error
-    );
-    res.status(500).send("Error fetching resource");
-  }
+export function injectBridgeScript(
+  html: string,
+  jsFileUrl = BRIDGE_FILE_URL,
+): string {
+  return html.replace(
+    /<\/head>/i,
+    `<script src="${jsFileUrl}" type="module"></script></head>`,
+  );
 }
 
-// Route pour servir le HTML injecté (pour n'importe quel chemin de page)
-app.get("*path", async (req: Request, res: Response, next) => {
-  // On ne traite que les requêtes qui attendent du HTML
-  const acceptHeader = req.headers.accept || "";
-  if (!acceptHeader.includes("text/html")) {
-    return next();
-  }
+export function rewriteAbsoluteUrlsInHtml(html: string): string {
+  const urlRegex = /["'\s=](https?:\/\/[^"'\\s&]+)["'\s&]?/g;
+  return html.replace(urlRegex, (_match, url) => {
+    console.log(chalk.gray(`  > Replacing URL: ${url}`));
+    const proxiedUrl = proxyFyUrl(url).toString();
+    return `"${proxiedUrl}"`;
+  });
+}
 
-  const pageId = req.query.pageId as string | undefined;
-  if (pageId) {
-    sendProgress(pageId, {
-      step: "HTML_START",
-      progress: 0,
-      message: `Request for HTML: ${req.path}`,
+export function createApp(
+  options: {
+    fetchImpl?: FetchLike;
+    port?: number;
+  } = {},
+): Express {
+  const app = express();
+  const port = options.port ?? DEFAULT_PORT;
+  const sseClients = new Map<string, Response>();
+  const sendProgress = createProgressSender(sseClients);
+  let fetchImpl = options.fetchImpl;
+
+  const resolveFetch = async () => {
+    if (!fetchImpl) {
+      fetchImpl = await loadDefaultFetch();
+    }
+    return fetchImpl;
+  };
+
+  app.get("/events/:pageId", (req: Request, res: Response) => {
+    const { pageId } = req.params;
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "Access-Control-Allow-Origin": "*",
     });
-  }
+    res.write("\n");
 
-  console.log(chalk.magenta(`\n[HTML Injector] Request for: ${req.path}`));
-  const host = req.headers.host || "";
-  const targetUrl = getTargetUrlFromHost(host, req.path);
-  if (!targetUrl) return res.status(400).send("Invalid host format");
-  const jsFileUrl = `/lib/spatial-viewer-bridge.js`;
+    sseClients.set(pageId, res);
+    console.log(chalk.cyan(`[SSE] Client connected for pageId: ${pageId}`));
 
-  try {
-    const fetch = (await import("node-fetch")).default;
-    const headers = {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "accept-language": req.headers["accept-language"] || "",
-      accept: "text/html", // On force la demande de HTML
-    };
-    console.log(chalk.gray(`  > Fetching HTML from: ${targetUrl}`));
+    req.on("close", () => {
+      sseClients.delete(pageId);
+      console.log(
+        chalk.cyan(`[SSE] Client disconnected for pageId: ${pageId}`),
+      );
+    });
+  });
+
+  app.use("/lib", express.static(path.join(__dirname, "../dist/lib")));
+
+  async function proxyResource(req: Request, res: Response) {
+    const host = req.headers.host || "";
+    const pageId = getRequestSearchParams(req).get("pageId") ?? undefined;
+    const requestTargetPath = getRequestTargetPath(req);
+
     if (pageId) {
       sendProgress(pageId, {
-        step: "HTML_FETCHING",
-        progress: 25,
-        message: `Fetching HTML from: ${targetUrl}`,
+        step: "RESOURCE_START",
+        progress: 0,
+        message: `Proxying resource: ${requestTargetPath}`,
       });
     }
-    const startTime = Date.now();
-    const response = await fetch(targetUrl, {
-      headers,
-    });
-    const duration = Date.now() - startTime;
+
     console.log(
-      chalk.green(
-        `  < Fetched HTML in ${duration}ms. Status: ${response.status}`
-      )
+      chalk.yellow(`\n[Proxy Resource] Request for: ${requestTargetPath}`),
     );
-    if (pageId) {
-      sendProgress(pageId, {
-        step: "HTML_FETCHED",
-        progress: 50,
-        message: `Fetched HTML in ${duration}ms. Status: ${response.status}`,
-        duration,
-      });
+    const targetUrl = getTargetUrlFromHost(host, requestTargetPath);
+    if (!targetUrl) {
+      return res.status(400).send("Invalid host format");
     }
 
-    if (!response.ok) {
-      // Si la page n'est pas trouvée, on passe au proxy de ressource
-      // car ça pourrait être un fichier avec une extension non reconnue comme .json
-      if (response.status === 404) {
-        console.log(
-          chalk.yellow("  ! HTML not found, attempting to proxy as a resource.")
-        );
-        return proxyResource(req, res);
+    try {
+      const fetch = await resolveFetch();
+      const headers = {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "accept-language": String(req.headers["accept-language"] || ""),
+        accept: String(req.headers.accept || "*/*"),
+      };
+      console.log(chalk.gray(`  > Fetching: ${targetUrl}`));
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "RESOURCE_FETCHING",
+          progress: 50,
+          message: `Fetching: ${targetUrl}`,
+        });
       }
-      console.log(chalk.red(`  ! Error: ${response.statusText}`));
-      return res.status(response.status).send(response.statusText);
-    }
+      const startTime = Date.now();
+      const response = await fetch(targetUrl, { headers });
+      const duration = Date.now() - startTime;
+      console.log(
+        chalk.green(`  < Fetched in ${duration}ms. Status: ${response.status}`),
+      );
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "RESOURCE_FETCHED",
+          progress: 100,
+          message: `Fetched in ${duration}ms. Status: ${response.status}`,
+          duration,
+        });
+      }
 
-    let html = await response.text();
-    console.log(chalk.gray("  > Injecting bridge script..."));
-    if (pageId) {
-      sendProgress(pageId, {
-        step: "HTML_PROCESSING",
-        progress: 75,
-        message: "Injecting bridge script and rewriting URLs...",
-      });
-    }
-    // Injection du JS avant </head>
-    html = html.replace(
-      /<\/head>/i,
-      `<script src="${jsFileUrl}" type="module"></script></head>`
-    );
+      if (!response.ok) {
+        console.log(chalk.red(`  ! Error: ${response.statusText}`));
+        return res.status(response.status).send(response.statusText);
+      }
 
-    /** replace any occurance of target url domain in url and  in html with proxyFyUrl */
-    const urlRegex = /["'\s=](https?:\/\/[^"'\s&]+)["'\s&]?/g;
-    html = html.replace(urlRegex, (match, url) => {
-      console.log(chalk.gray(`  > Replacing URL: ${url}`));
-      const proxiedUrl = proxyFyUrl(url).toString();
-      return `"${proxiedUrl}"`;
-    });
-
-    if (pageId) {
-      sendProgress(pageId, {
-        step: "HTML_COMPLETE",
-        progress: 100,
-        message: "HTML processing complete. Sending to client.",
-      });
+      if (response.body) {
+        const contentType =
+          response.headers.get("content-type") || "application/octet-stream";
+        console.log(chalk.gray(`  > Content-Type: ${contentType}`));
+        res.set("Content-Type", contentType);
+        res.set("Access-Control-Allow-Origin", "*");
+        res.set("Access-Control-Allow-Headers", "*");
+        response.body.pipe(res);
+      } else {
+        console.log(chalk.gray("  > No content in response."));
+        res.status(204).send();
+      }
+    } catch (error) {
+      console.error(
+        chalk.red("[Proxy Resource] Error fetching resource:"),
+        error,
+      );
+      res.status(500).send("Error fetching resource");
     }
-    res.set("Content-Type", "text/html");
-    res.send(html);
-  } catch (error) {
-    console.error(
-      chalk.red("[HTML Injector] Error fetching target URL:"),
-      error
-    );
-    res.status(500).send("Error fetching target URL");
   }
-});
 
-// Middleware pour proxyfier toutes les autres requêtes (ressources)
-app.use(proxyResource);
+  app.get("*path", async (req: Request, res: Response, next) => {
+    const acceptHeader = req.headers.accept || "";
+    if (!acceptHeader.includes("text/html")) {
+      return next();
+    }
 
-app.listen(PORT, () => {
-  console.log(`Proxy server running at http://localhost:${PORT}`);
-});
+    const pageId = getRequestSearchParams(req).get("pageId") ?? undefined;
+    const requestTargetPath = getRequestTargetPath(req);
+    if (pageId) {
+      sendProgress(pageId, {
+        step: "HTML_START",
+        progress: 0,
+        message: `Request for HTML: ${requestTargetPath}`,
+      });
+    }
+
+    console.log(
+      chalk.magenta(`\n[HTML Injector] Request for: ${requestTargetPath}`),
+    );
+    const host = req.headers.host || "";
+    const targetUrl = getTargetUrlFromHost(host, requestTargetPath);
+    if (!targetUrl) {
+      return res.status(400).send("Invalid host format");
+    }
+
+    try {
+      const fetch = await resolveFetch();
+      const headers = {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "accept-language": String(req.headers["accept-language"] || ""),
+        accept: "text/html",
+      };
+      console.log(chalk.gray(`  > Fetching HTML from: ${targetUrl}`));
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "HTML_FETCHING",
+          progress: 25,
+          message: `Fetching HTML from: ${targetUrl}`,
+        });
+      }
+      const startTime = Date.now();
+      const response = await fetch(targetUrl, { headers });
+      const duration = Date.now() - startTime;
+      console.log(
+        chalk.green(
+          `  < Fetched HTML in ${duration}ms. Status: ${response.status}`,
+        ),
+      );
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "HTML_FETCHED",
+          progress: 50,
+          message: `Fetched HTML in ${duration}ms. Status: ${response.status}`,
+          duration,
+        });
+      }
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log(
+            chalk.yellow(
+              "  ! HTML not found, attempting to proxy as a resource.",
+            ),
+          );
+          return proxyResource(req, res);
+        }
+        console.log(chalk.red(`  ! Error: ${response.statusText}`));
+        return res.status(response.status).send(response.statusText);
+      }
+
+      let html = await response.text();
+      console.log(chalk.gray("  > Injecting bridge script..."));
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "HTML_PROCESSING",
+          progress: 75,
+          message: "Injecting bridge script and rewriting URLs...",
+        });
+      }
+
+      html = injectBridgeScript(html);
+      html = rewriteAbsoluteUrlsInHtml(html);
+
+      if (pageId) {
+        sendProgress(pageId, {
+          step: "HTML_COMPLETE",
+          progress: 100,
+          message: "HTML processing complete. Sending to client.",
+        });
+      }
+      res.set("Content-Type", "text/html");
+      res.send(html);
+    } catch (error) {
+      console.error(
+        chalk.red("[HTML Injector] Error fetching target URL:"),
+        error,
+      );
+      res.status(500).send("Error fetching target URL");
+    }
+  });
+
+  app.use(proxyResource);
+
+  return app;
+}
+
+export function startServer(port = DEFAULT_PORT) {
+  const app = createApp({ port });
+  return app.listen(port, () => {
+    console.log(`Proxy server running at http://localhost:${port}`);
+  });
+}
+
+if (process.env.VITEST !== "true") {
+  startServer();
+}
