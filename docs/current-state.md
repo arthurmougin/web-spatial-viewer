@@ -40,21 +40,21 @@ Feature classification used throughout: **Confirmed / Partial / Missing / Broken
 
 ```bash
 npm run server:watch
-# Starts Express proxy at http://localhost:3000
+# Starts Express proxy at http://localhost:47891
 ```
 
 **Terminal 2 — Front-end viewer:**
 
 ```bash
 npm run dev
-# Starts Vite dev server, typically at http://localhost:5173
+# Starts Vite dev server, typically at http://localhost:47892
 ```
 
 **To load a site:**  
 Open the viewer in a browser and type a URL (e.g. `https://lofi.cafe`) in the top search bar. The viewer proxifies the URL and loads it into the 3D iframe.
 
 Or pass a URL via query string:  
-`http://localhost:5173?url=https://lofi.cafe`
+`http://localhost:47892?url=https://lofi.cafe`
 
 ### Bridge library build (required for proxy injection)
 
@@ -81,8 +81,8 @@ Three main runtime layers:
 
 | Layer             | Runtime               | Entry point                        |
 | ----------------- | --------------------- | ---------------------------------- |
-| Proxy server      | Node (tsx)            | `server/server.ts` → port 3000     |
-| Front-end viewer  | Browser (Vite/React)  | `src/main.tsx` → port 5173         |
+| Proxy server      | Node (tsx)            | `server/server.ts` → port 47891     |
+| Front-end viewer  | Browser (Vite/React)  | `src/main.tsx` → port 47892         |
 | Bridge (injected) | Browser (page iframe) | `src/lib/spatial-viewer-bridge.ts` |
 
 ---
@@ -91,7 +91,7 @@ Three main runtime layers:
 
 ### Proxy (server/server.ts)
 
-- **Confirmed** — Subdomain-based URL proxification. `https://foo.bar.com` → `http://foo--bar-com.localhost:3000`
+- **Confirmed** — Subdomain-based URL proxification. `https://foo.bar.com` → `http://foo--bar-com.localhost:47891`
 - **Confirmed** — HTML fetch + bridge script injection (`<script src="/lib/spatial-viewer-bridge.js" type="module">`) into every proxified page's `<head>`
 - **Confirmed** — In-HTML URL rewriting: all `https://` URLs in served HTML are proxified via regex replacement (fragile — regex only, not attribute-aware)
 - **Confirmed** — Resource proxying (JS, CSS, images, fonts) via fallback route
@@ -157,7 +157,7 @@ Three main runtime layers:
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **viewer**          | The React Three Fiber front-end app. Renders the 3D spatial shell and embeds the proxified page in an iframe inside a Three.js scene.                                                                                        |
 | **bridge**          | A JavaScript module (`spatial-viewer-bridge.ts`) injected by the proxy into every served page. Communicates with the viewer via `postMessage`.                                                                               |
-| **proxy**           | The Express server (`server.ts`) running on port 3000. Fetches remote pages, injects the bridge script, rewrites URLs, and streams resources.                                                                                |
+| **proxy**           | The Express server (`server.ts`) running on port 47891. Fetches remote pages, injects the bridge script, rewrites URLs, and streams resources.                                                                                |
 | **spatial web**     | An informal term for web experiences designed for or optimized for spatial computing contexts (e.g. Apple Vision Pro). Not a single standard.                                                                                |
 | **WebXR**           | A W3C browser API for immersive VR/AR experiences. Distinct from the visionOS spatial browsing layer. Safari on visionOS supports WebXR immersive sessions.                                                                  |
 | **WebSpatial**      | A separate open-source project (https://webspatial.dev) that adds spatial concepts to web apps via an App Shell + SDK bridge. Not Apple's native SDK.                                                                        |

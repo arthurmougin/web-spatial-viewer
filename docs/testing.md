@@ -113,8 +113,8 @@ Tous les tests passent. Les messages stderr visibles dans la sortie console (ex 
 
 ```typescript
 // LIMITATION CONNUE : les domaines contenant des tirets ne peuvent pas faire un roundtrip correct
-proxyFyUrl("https://my-app.com") → "my-app-com.localhost:3000"
-UnProxyFyUrl("my-app-com.localhost:3000") → "https://my.app.com" // ❌ incorrect
+proxyFyUrl("https://my-app.com") → "my-app-com.localhost:47891"
+UnProxyFyUrl("my-app-com.localhost:47891") → "https://my.app.com" // ❌ incorrect
 ```
 
 **Cause :** Le pattern de proxy utilise les tirets à la fois comme :

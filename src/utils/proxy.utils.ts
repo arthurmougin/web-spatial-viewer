@@ -10,7 +10,7 @@ export function proxyFyUrl(url: string, pageId?: number): URL | null {
   const proxyHostname =
     subParts.length > 0 ? `${subParts.join("-")}--${mainDomain}` : mainDomain;
 
-  const proxyPort = 3000;
+  const proxyPort = 47891;
   const isSSL = window.location.protocol === "https:";
   const proxyProtocol = isSSL ? "https:" : "http:";
   const baseProxyUrl = `${proxyProtocol}//${proxyHostname}.localhost:${proxyPort}`;
@@ -33,7 +33,7 @@ export function UnProxyFyUrl(proxyUrl: URL | string): URL | null {
   if (proxyUrl === "") return null;
   if (typeof proxyUrl === "string") proxyUrl = new URL(proxyUrl);
   const { hostname, pathname, search } = proxyUrl;
-  // Ex: lofi-jingle-avp--vercel-app.localhost:3000
+  // Ex: lofi-jingle-avp--vercel-app.localhost:47891
   const match = hostname.match(/^([^.]+)\.localhost(?::\d+)?$/);
   if (!match) return proxyUrl;
 

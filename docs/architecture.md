@@ -11,7 +11,7 @@
 │  Developer's Browser (e.g. Chrome / Firefox on Windows)         │
 │                                                                 │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  Viewer (port 5173 — Vite dev server)                     │  │
+│  │  Viewer (port 47892 — Vite dev server)                     │  │
 │  │  React + React Three Fiber                                │  │
 │  │                                                           │  │
 │  │  ┌─────────────────────────────────────────────────────┐  │  │
@@ -29,7 +29,7 @@
 │  │                                                           │  │
 │  │  SearchBar (HTML overlay on canvas)                       │  │
 │  └───────────────────────────────────────────────────────────┘  │
-│                │  iframe src=http://[proxied].localhost:3000    │
+│                │  iframe src=http://[proxied].localhost:47891    │
 │                ▼                                                │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │  <iframe> — proxified page                                 │ │
@@ -42,7 +42,7 @@
                 │  HTTP fetch (node-fetch)
                 ▼
 ┌───────────────────────────────────────────────────────────────┐
-│  Proxy server (port 3000 — Node/Express, tsx)                 │
+│  Proxy server (port 47891 — Node/Express, tsx)                 │
 │  server/server.ts                                             │
 │                                                               │
 │  Route: GET *path (Accept: text/html)                         │
@@ -75,14 +75,14 @@ The proxy uses subdomain encoding so the browser treats each proxified origin as
 
 | Real URL                              | Proxified URL                                        |
 | ------------------------------------- | ---------------------------------------------------- |
-| `https://lofi.cafe/`                  | `http://lofi-cafe.localhost:3000/`                   |
-| `https://lofi.jingle.avp.vercel.app/` | `http://lofi-jingle-avp--vercel-app.localhost:3000/` |
+| `https://lofi.cafe/`                  | `http://lofi-cafe.localhost:47891/`                   |
+| `https://lofi.jingle.avp.vercel.app/` | `http://lofi-jingle-avp--vercel-app.localhost:47891/` |
 
 **Rule:**
 
 - Last two domain parts → joined with `-` (the "main domain")
 - Remaining subdomain parts → joined with `-` (the "site name")
-- Combined: `<site-name>--<main-domain>.localhost:3000`
+- Combined: `<site-name>--<main-domain>.localhost:47891`
 
 This logic lives in two places (currently duplicated):
 
@@ -125,7 +125,7 @@ All messages go through `window.top.postMessage(data, "*")` from the bridge, and
 In parallel with the postMessage bridge, the proxy pushes loading progress via Server-Sent Events. The viewer subscribes at page creation time:
 
 ```
-Viewer ──► GET http://localhost:3000/events/:pageId  (SSE)
+Viewer ──► GET http://localhost:47891/events/:pageId  (SSE)
                 │
   Proxy sends:  HTML_START (0%)
                 HTML_FETCHING (25%)

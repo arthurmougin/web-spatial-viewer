@@ -21,7 +21,7 @@ export class ProgressListener {
       this.eventSource.close();
     }
 
-    const url = `http://localhost:3000/events/${this.pageId}`;
+    const url = `http://localhost:47891/events/${this.pageId}`;
     this.eventSource = new EventSource(url);
 
     this.eventSource.onmessage = (event) => {

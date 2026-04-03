@@ -20,7 +20,7 @@ See `docs/` for full architecture, capability matrix, and roadmap.
 - **Styling**: CSS Modules for non-spatial overlays (e.g. `SearchBar.module.css`); Tailwind 4 for utility components (e.g. `progress.tsx`). **Do not use CSS Modules for the in-window 3D browser chrome — that must use `@react-three/uikit`**.
 - **3D spatial UI**: `@react-three/uikit` + `@react-three/uikit-default` + `@react-three/uikit-lucide` for the browser chrome rendered inside the R3F scene
 - **Build**: Vite 7 (viewer + bridge built from same `vite.config.ts`)
-- **Proxy server**: Express 5 + tsx (Node, port 3000)
+- **Proxy server**: Express 5 + tsx (Node, port 47891)
 
 ---
 
@@ -28,11 +28,11 @@ See `docs/` for full architecture, capability matrix, and roadmap.
 
 | Layer              | Where runs  | Entry point                        |
 | ------------------ | ----------- | ---------------------------------- |
-| Proxy server       | Node        | `server/server.ts` → port 3000     |
-| Viewer (front-end) | Browser     | `src/main.tsx` → port 5173         |
+| Proxy server       | Node        | `server/server.ts` → port 47891     |
+| Viewer (front-end) | Browser     | `src/main.tsx` → port 47892         |
 | Bridge (injected)  | Page iframe | `src/lib/spatial-viewer-bridge.ts` |
 
-**URL convention**: `https://foo.bar.com` → `http://foo--bar-com.localhost:3000`  
+**URL convention**: `https://foo.bar.com` → `http://foo--bar-com.localhost:47891`  
 Both sides share proxification logic: `src/utils/proxy.utils.ts` (client) and `server/server.ts` (server).
 
 ---
@@ -47,7 +47,7 @@ Bridge → Viewer:          NETWORK_IDLE (window.load fired → dismiss splash)
 
 Types are defined in `types/bridge.d.ts`. All `IBridgeMessage.id` values are `number` (Date.now()).
 
-SSE progress channel: `GET http://localhost:3000/events/:pageId`
+SSE progress channel: `GET http://localhost:47891/events/:pageId`
 
 ---
 

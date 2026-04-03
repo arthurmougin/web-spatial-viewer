@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = 47891;
 
 // --- Infrastructure pour les Server-Sent Events (SSE) ---
 const sseClients = new Map<string, Response>();
@@ -49,7 +49,7 @@ app.get("/events/:pageId", (req: Request, res: Response) => {
 // Utilitaire pour reconstruire l'URL cible à partir du sous-domaine
 function getTargetUrlFromHost(host: string, path: string): string | null {
   console.log(chalk.blue(`[Proxy] Resolving host: ${host}${path}`));
-  // Ex: lofi-jingle-avp--vercel-app.localhost:3000 => lofi-jingle-avp.vercel.app
+  // Ex: lofi-jingle-avp--vercel-app.localhost:47891 => lofi-jingle-avp.vercel.app
   const match = host.match(/^([^.]+)\.localhost(?::\d+)?$/);
   if (!match) {
     console.log(chalk.red(`[Proxy] Invalid host format: ${host}`));
@@ -85,7 +85,7 @@ export function proxyFyUrl(url: string): URL {
   const proxyHostname =
     subParts.length > 0 ? `${subParts.join("-")}--${mainDomain}` : mainDomain;
 
-  const proxyPort = 3000;
+  const proxyPort = 47891;
   //is the server in prod environment?
 
   const isServerInProduction = process.env.NODE_ENV === "production";

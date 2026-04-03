@@ -45,9 +45,9 @@ function seedPage(overrides: Partial<Page> = {}) {
         } as unknown as PageListener,
         progressListener: null,
         progressData: null,
-        url: "http://lofi-cafe.localhost:3000/",
+        url: "http://lofi-cafe.localhost:47891/",
         showSplash: false,
-        history: ["http://lofi-cafe.localhost:3000/"],
+        history: ["http://lofi-cafe.localhost:47891/"],
         historyIndex: 0,
         ...overrides,
       },
@@ -71,7 +71,7 @@ describe("recordNavigation — push", () => {
     usePagesStore.getState().recordNavigation(PAGE_ID, "/page2", "push");
     const page = getPage();
     expect(page.history).toEqual([
-      "http://lofi-cafe.localhost:3000/",
+      "http://lofi-cafe.localhost:47891/",
       "/page2",
     ]);
     expect(page.historyIndex).toBe(1);
@@ -98,7 +98,7 @@ describe("recordNavigation — push", () => {
           pageListener: { dispose: vi.fn() } as unknown as PageListener,
           progressListener: null,
           progressData: null,
-          url: "http://lofi-cafe.localhost:3000/",
+          url: "http://lofi-cafe.localhost:47891/",
           showSplash: false,
           history: ["/a"],
           historyIndex: 0,
@@ -108,7 +108,7 @@ describe("recordNavigation — push", () => {
           pageListener: { dispose: vi.fn() } as unknown as PageListener,
           progressListener: null,
           progressData: null,
-          url: "http://other.localhost:3000/",
+          url: "http://other.localhost:47891/",
           showSplash: false,
           history: ["/x"],
           historyIndex: 0,
@@ -140,11 +140,11 @@ describe("recordNavigation — replace", () => {
       .getState()
       .recordNavigation(
         PAGE_ID,
-        "http://lofi-cafe.localhost:3000/?v=2",
+        "http://lofi-cafe.localhost:47891/?v=2",
         "replace",
       );
     const page = getPage();
-    expect(page.history).toEqual(["http://lofi-cafe.localhost:3000/?v=2"]);
+    expect(page.history).toEqual(["http://lofi-cafe.localhost:47891/?v=2"]);
     expect(page.historyIndex).toBe(0);
   });
 });
@@ -181,7 +181,7 @@ describe("recordNavigation — pop", () => {
 
 describe("removePage", () => {
   it("removes the page from the store by proxified URL", () => {
-    const url = "http://lofi-cafe.localhost:3000/";
+    const url = "http://lofi-cafe.localhost:47891/";
     seedPage({ url });
     expect(usePagesStore.getState().pages).toHaveLength(1);
     usePagesStore.getState().removePage(new URL(url));
@@ -201,7 +201,7 @@ describe("removePage", () => {
           } as unknown as PageListener,
           progressListener: null,
           progressData: null,
-          url: "http://lofi-cafe.localhost:3000/",
+          url: "http://lofi-cafe.localhost:47891/",
           showSplash: false,
           history: [],
           historyIndex: 0,
@@ -210,7 +210,7 @@ describe("removePage", () => {
     });
     usePagesStore
       .getState()
-      .removePage(new URL("http://lofi-cafe.localhost:3000/"));
+      .removePage(new URL("http://lofi-cafe.localhost:47891/"));
     expect(disposeSpy).toHaveBeenCalledOnce();
   });
 });

@@ -13,7 +13,7 @@ describe("proxyFyUrl", () => {
     const result = proxyFyUrl("https://google.com");
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("google-com.localhost");
-    expect(result!.port).toBe("3000");
+    expect(result!.port).toBe("47891");
     expect(result!.protocol).toBe("http:");
   });
 
@@ -24,7 +24,7 @@ describe("proxyFyUrl", () => {
   });
 
   it("proxifies a deep subdomain", () => {
-    // lofi.jingle.avp.vercel.app → lofi-jingle-avp--vercel-app.localhost:3000
+    // lofi.jingle.avp.vercel.app → lofi-jingle-avp--vercel-app.localhost:47891
     const result = proxyFyUrl("https://lofi.jingle.avp.vercel.app");
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("lofi-jingle-avp--vercel-app.localhost");
@@ -76,7 +76,7 @@ describe("UnProxyFyUrl", () => {
   });
 
   it("unproxifies a simple domain (string input)", () => {
-    const result = UnProxyFyUrl("http://google-com.localhost:3000/");
+    const result = UnProxyFyUrl("http://google-com.localhost:47891/");
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("google.com");
     expect(result!.protocol).toBe("https:");
@@ -84,7 +84,7 @@ describe("UnProxyFyUrl", () => {
 
   it("unproxifies a URL with a subdomain (double-dash separator)", () => {
     const result = UnProxyFyUrl(
-      "http://www--google-com.localhost:3000/search?q=test",
+      "http://www--google-com.localhost:47891/search?q=test",
     );
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("www.google.com");
@@ -94,14 +94,14 @@ describe("UnProxyFyUrl", () => {
 
   it("unproxifies a deep subdomain", () => {
     const result = UnProxyFyUrl(
-      "http://lofi-jingle-avp--vercel-app.localhost:3000/",
+      "http://lofi-jingle-avp--vercel-app.localhost:47891/",
     );
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("lofi-jingle-avp.vercel.app");
   });
 
   it("accepts a URL object as input", () => {
-    const input = new URL("http://lofi-cafe.localhost:3000/");
+    const input = new URL("http://lofi-cafe.localhost:47891/");
     const result = UnProxyFyUrl(input);
     expect(result).not.toBeNull();
     expect(result!.hostname).toBe("lofi.cafe");
@@ -134,7 +134,7 @@ describe("UnProxyFyUrl", () => {
   // ─── Known limitation ───────────────────────────────────────────────────
   // Domains whose BASE name contains hyphens (e.g. my-app.com) cannot be
   // roundtripped: the hyphen is indistinguishable from the sub-domain separator.
-  // proxyFyUrl('https://my-app.com') → 'http://my-app-com.localhost:3000'
+  // proxyFyUrl('https://my-app.com') → 'http://my-app-com.localhost:47891'
   // UnProxyFyUrl  → 'https://my.app.com' (wrong — hyphens become dots)
   it("KNOWN LIMITATION — base domain with hyphen decodes incorrectly", () => {
     const proxied = proxyFyUrl("https://my-app.com")!;

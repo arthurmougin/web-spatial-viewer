@@ -119,7 +119,7 @@ describe("FetchManifest", () => {
 describe("checkWebManifest", () => {
   it("returns null when the manifest response is not ok", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
-    const result = await checkWebManifest("http://lofi-cafe.localhost:3000");
+    const result = await checkWebManifest("http://lofi-cafe.localhost:47891");
     expect(result).toBeNull();
   });
 
@@ -137,10 +137,10 @@ describe("checkWebManifest", () => {
         json: vi.fn().mockResolvedValue(mockManifest),
       }),
     );
-    const result = await checkWebManifest("http://lofi-cafe.localhost:3000");
+    const result = await checkWebManifest("http://lofi-cafe.localhost:47891");
     expect(result).not.toBeNull();
     expect(result!.icons?.[0].src).toBe(
-      "http://lofi-cafe.localhost:3000/icon.png",
+      "http://lofi-cafe.localhost:47891/icon.png",
     );
   });
 
@@ -164,7 +164,7 @@ describe("checkWebManifest", () => {
         json: vi.fn().mockResolvedValue(mockManifest),
       }),
     );
-    await checkWebManifest("http://lofi-cafe.localhost:3000");
+    await checkWebManifest("http://lofi-cafe.localhost:47891");
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("Il manque des icônes requises"),
     );
@@ -184,7 +184,7 @@ describe("checkWebManifest", () => {
         json: vi.fn().mockResolvedValue(mockManifest),
       }),
     );
-    const result = await checkWebManifest("http://lofi-cafe.localhost:3000");
+    const result = await checkWebManifest("http://lofi-cafe.localhost:47891");
     expect(result!.scope).toBe("/app/");
   });
 });
